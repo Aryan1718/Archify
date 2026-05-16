@@ -1,0 +1,39 @@
+.DS_Store
+
+# Archify generated outputs and local setup
+.archify/
+archify.config.json
+archify.md
+.agents/
+.claude/
+
+# Python cache and virtualenvs
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Node package artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test and coverage outputs
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+
+# Editor and OS temp files
+.idea/
+.vscode/
+*.swp
+*.swo

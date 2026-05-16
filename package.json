@@ -1,0 +1,21 @@
+{
+  "name": "archify",
+  "version": "0.1.0",
+  "description": "Contract-first architecture understanding scaffold for repository analysis.",
+  "type": "module",
+  "bin": {
+    "archify": "./bin/archify.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "files": [
+    "bin",
+    "src",
+    "python"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "python": ">=3.11"
+  }
+}
