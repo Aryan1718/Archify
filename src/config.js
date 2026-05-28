@@ -5,10 +5,10 @@ import {
   CONFIG_FILE,
   DEFAULT_CONFIG,
   DEFAULT_IGNORE_LINES,
+  getSharedGlobalSkillDir,
   IGNORE_FILE,
   PROJECT_CLAUDE_SKILL_DIR,
   PROJECT_SKILL_DIR,
-  SHARED_GLOBAL_SKILL_DIR,
   SHARED_INSTALL_PLATFORM,
   SHARED_INSTALL_PLATFORMS,
   SKILL_TEMPLATE_VERSION
@@ -22,7 +22,7 @@ function isObject(value) {
 
 function resolveSkillTargetPath({ installMode, platform, projectRoot }) {
   if (installMode === "global") {
-    return SHARED_GLOBAL_SKILL_DIR;
+    return getSharedGlobalSkillDir();
   }
 
   return platform === "claude-code"

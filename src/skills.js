@@ -2,9 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import {
+  getSharedGlobalSkillDir,
   PROJECT_CLAUDE_SKILL_DIR,
   PROJECT_SKILL_DIR,
-  SHARED_GLOBAL_SKILL_DIR,
   SHARED_INSTALL_PLATFORM,
   SKILL_TEMPLATE_VERSION
 } from "./constants.js";
@@ -27,9 +27,9 @@ Triggering:
 - Do not use this skill for generic code edits, debugging, or non-architecture tasks.
 
 End-user flow:
-1. The user runs \`npx archify\` once and installs this shared skill globally.
+1. The user runs \`npx archify init\` once in the repository they want to work on, or uses a shared global install if they manage Archify centrally.
 2. After installation, the user invokes this \`archify\` skill instead of manually calling Archify subcommands.
-3. This skill handles the internal Archify CLI steps needed to prepare grounding and write \`archify.md\`.
+3. This skill handles the internal Archify CLI steps needed to refresh grounding and write \`archify.md\`.
 
 Agent detection:
 1. First determine whether the current agent is Codex or Claude Code by inspecting the current agent environment, system instructions, and tool conventions.
@@ -137,9 +137,9 @@ Triggering:
 - Do not use this skill for generic code edits, debugging, or non-architecture tasks.
 
 End-user flow:
-1. The user runs \`npx archify\` once and installs this skill for ${agentName}.
+1. The user runs \`npx archify init\` once in this repository and installs this skill for ${agentName}.
 2. After installation, the user invokes this \`archify\` skill instead of manually calling Archify subcommands.
-3. This skill handles the internal Archify CLI steps needed to prepare grounding and write \`archify.md\`.
+3. This skill handles the internal Archify CLI steps needed to refresh grounding and write \`archify.md\`.
 
 Workflow:
 1. Start by confirming that this skill will handle the full Archify flow itself instead of pushing command execution back to the user.
@@ -199,9 +199,9 @@ Triggering:
 - Do not use this skill for generic code edits, debugging, or non-architecture tasks.
 
 End-user flow:
-1. The user runs \`npx archify\` once and installs this skill for ${agentName}.
+1. The user runs \`npx archify init\` once in this repository and installs this skill for ${agentName}.
 2. After installation, the user invokes this \`archify\` skill instead of manually calling Archify subcommands.
-3. This skill handles the internal Archify CLI steps needed to prepare grounding and write \`archify.md\`.
+3. This skill handles the internal Archify CLI steps needed to refresh grounding and write \`archify.md\`.
 
 Workflow:
 1. Start by confirming that this skill will handle the full Archify flow itself instead of pushing command execution back to the user.
@@ -248,7 +248,7 @@ Writing rules:
 
 function resolveTargetDir({ repoRoot, installMode, platform }) {
   if (installMode === "global") {
-    return SHARED_GLOBAL_SKILL_DIR;
+    return getSharedGlobalSkillDir();
   }
 
   return platform === "claude-code"

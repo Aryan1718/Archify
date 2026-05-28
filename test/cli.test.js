@@ -90,6 +90,7 @@ test("bare archify runs setup for the current project and installs both Codex an
   assert.match(codexSkill, /invokes this `archify` skill instead of manually calling Archify subcommands/i);
   assert.match(codexSkill, /Check whether `archify\.config\.json` exists in the current project before starting analysis/i);
   assert.match(codexSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
+  assert.match(codexSkill, /The user runs `npx archify init` once in this repository/i);
   assert.match(codexSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
   assert.match(codexSkill, /Ask for permission before starting `npx archify analyze \.`/i);
   assert.match(codexSkill, /building `?\.archify\/`? can take time on larger repositories/i);
@@ -115,6 +116,7 @@ test("bare archify runs setup for the current project and installs both Codex an
   assert.match(claudeSkill, /Claude Code/i);
   assert.match(claudeSkill, /Check whether `archify\.config\.json` exists in the current project before starting analysis/i);
   assert.match(claudeSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
+  assert.match(claudeSkill, /The user runs `npx archify init` once in this repository/i);
   assert.match(claudeSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
   assert.match(claudeSkill, /Ask for permission before starting `npx archify analyze \.`/i);
   assert.match(claudeSkill, /Read the root `README\.md` first when it is present/i);
@@ -171,6 +173,7 @@ test("init supports shared global install mode and is idempotent", async () => {
   assert.match(sharedSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
   assert.match(sharedSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
   assert.match(sharedSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform both`/i);
+  assert.match(sharedSkill, /The user runs `npx archify init` once in the repository they want to work on/i);
   assert.match(sharedSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
   assert.match(sharedSkill, /start one bounded README\/context subagent in parallel with the analysis step/i);
   assert.match(sharedSkill, /Do not block on the README\/context subagent before `analyze` finishes/i);
@@ -545,6 +548,34 @@ test("clean removes generated artifacts but preserves config and ignore files", 
   await fs.access(path.join(cwd, ".archifyignore"));
 });
 
+test("status explains setup state before and after analysis", async () => {
+  const cwd = await makeWorkspace();
+
+  let result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  let parsed = parseStdoutJson(result);
+  assert.equal(parsed.installed, false);
+  assert.match(parsed.nextStep, /npx archify init/i);
+
+  assert.equal(runInit({ cwd, projectPath: "." }).status, 0);
+
+  result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  parsed = parseStdoutJson(result);
+  assert.equal(parsed.installed, true);
+  assert.equal(parsed.analysisReady, false);
+  assert.match(parsed.summary, /not been built yet/i);
+
+  assert.equal(runCli(["analyze", "."], { cwd }).status, 0);
+
+  result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  parsed = parseStdoutJson(result);
+  assert.equal(parsed.installed, true);
+  assert.equal(parsed.analysisReady, true);
+  assert.ok(parsed.availableArtifacts.includes("manifest.json"));
+});
+
 test("analyze honors .archifyignore, skips sensitive files, and reports real counts deterministically", async () => {
   const cwd = await makeWorkspace();
   await fs.mkdir(path.join(cwd, "src"), { recursive: true });
@@ -668,7 +699,7 @@ print(validate_extraction(payload))
   });
 
   assert.equal(result.status, 0, result.stderr);
-  const lines = result.stdout.trim().split("\n");
+  const lines = result.stdout.trim().split(/\r?\n/);
   assert.equal(lines[0], "file_src_app_py");
   assert.equal(lines[1], "symbol_src_app_py_function_run");
   assert.match(lines[2], /invalid confidence/);

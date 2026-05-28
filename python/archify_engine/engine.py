@@ -410,7 +410,7 @@ def _brief_list(items: list[str], *, limit: int = 3) -> list[str]:
 
 
 def _artifact_relpath(config: EngineConfig, name: str) -> str:
-    return str(Path(config.output_dir.name) / name)
+    return Path(config.output_dir.name, name).as_posix()
 
 
 QUESTIONNAIRE_TEMPLATE = [
