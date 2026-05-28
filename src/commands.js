@@ -57,6 +57,68 @@ async function validateGenerateArtifacts(repoRoot, outputDir) {
   }
 }
 
+const STALE_CHECK_IGNORED_DIRS = new Set([
+  ".git",
+  ".archify",
+  ".agents",
+  ".claude",
+  "node_modules",
+  "dist",
+  "build"
+]);
+
+async function collectNewestWorkspaceChange(rootDir, currentDir = rootDir) {
+  const entries = await fs.readdir(currentDir, { withFileTypes: true });
+  let newest = null;
+
+  for (const entry of entries) {
+    if (entry.name === "archify.md") {
+      continue;
+    }
+
+    const fullPath = path.join(currentDir, entry.name);
+    const relativePath = path.relative(rootDir, fullPath) || entry.name;
+
+    if (entry.isDirectory()) {
+      if (STALE_CHECK_IGNORED_DIRS.has(entry.name)) {
+        continue;
+      }
+
+      const nestedNewest = await collectNewestWorkspaceChange(rootDir, fullPath);
+      if (nestedNewest && (!newest || nestedNewest.mtimeMs > newest.mtimeMs)) {
+        newest = nestedNewest;
+      }
+      continue;
+    }
+
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    const stats = await fs.stat(fullPath);
+    const candidate = {
+      path: relativePath.split(path.sep).join("/"),
+      mtimeMs: stats.mtimeMs,
+      modifiedAt: stats.mtime.toISOString()
+    };
+
+    if (!newest || candidate.mtimeMs > newest.mtimeMs) {
+      newest = candidate;
+    }
+  }
+
+  return newest;
+}
+
+function parseTimestamp(value) {
+  if (!value) {
+    return null;
+  }
+
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? null : time;
+}
+
 export async function initCommand(repoRoot, options) {
   const setup = await resolveSetupOptions(repoRoot, options);
   const installRoot = setup.projectRoot;
@@ -160,6 +222,8 @@ export async function statusCommand(repoRoot) {
   const outputDirExists = await pathExists(outputDir);
   const manifestPath = path.join(outputDir, "manifest.json");
   const manifestExists = outputDirExists ? await pathExists(manifestPath) : false;
+  const designPacketPath = path.join(outputDir, "design-packet.json");
+  const designPacketExists = outputDirExists ? await pathExists(designPacketPath) : false;
 
   let manifest = null;
   let manifestStatus = "missing";
@@ -169,6 +233,17 @@ export async function statusCommand(repoRoot) {
       manifestStatus = manifest?.status ?? "unknown";
     } catch {
       manifestStatus = "invalid";
+    }
+  }
+
+  let designPacket = null;
+  let designPacketStatus = "missing";
+  if (designPacketExists) {
+    try {
+      designPacket = JSON.parse(await fs.readFile(designPacketPath, "utf8"));
+      designPacketStatus = designPacket?.status ?? "unknown";
+    } catch {
+      designPacketStatus = "invalid";
     }
   }
 
@@ -182,7 +257,48 @@ export async function statusCommand(repoRoot) {
   const availableArtifacts = artifactStates.filter((item) => item.present).map((item) => item.name);
   const missingArtifacts = artifactStates.filter((item) => !item.present).map((item) => item.name);
   const analysisReady = manifestStatus === "ready";
-  const generatedPacketReady = availableArtifacts.includes("design-packet.json");
+  const generatedPacketReady = designPacketStatus === "ready";
+  const newestWorkspaceChange = await collectNewestWorkspaceChange(repoRoot);
+  const manifestGeneratedAtMs = parseTimestamp(manifest?.generatedAt);
+  const designPacketGeneratedAtMs = parseTimestamp(designPacket?.generatedAt);
+  const knowledgeStale = Boolean(
+    analysisReady &&
+    newestWorkspaceChange &&
+    manifestGeneratedAtMs !== null &&
+    newestWorkspaceChange.mtimeMs > manifestGeneratedAtMs
+  );
+  const designPacketStale = Boolean(
+    generatedPacketReady &&
+    analysisReady &&
+    (
+      knowledgeStale ||
+      (manifestGeneratedAtMs !== null &&
+        designPacketGeneratedAtMs !== null &&
+        manifestGeneratedAtMs > designPacketGeneratedAtMs)
+    )
+  );
+
+  let recommendedAction = "reuse";
+  let summary = "Archify is set up and repository knowledge is ready to reuse.";
+  let nextStep = "Ask your AI assistant to use Archify on this repo.";
+
+  if (!analysisReady) {
+    recommendedAction = "analyze";
+    summary = "Archify is set up, but repository knowledge has not been built yet.";
+    nextStep = "Ask your AI assistant to use Archify on this repo, or run `npx archify analyze .` if you want to build the knowledge base manually.";
+  } else if (knowledgeStale) {
+    recommendedAction = "analyze";
+    summary = "Archify knowledge exists, but it looks older than the current repository files.";
+    nextStep = "Ask your AI assistant to use Archify on this repo so it can refresh the knowledge, or run `npx archify analyze .` manually.";
+  } else if (!generatedPacketReady) {
+    recommendedAction = "generate";
+    summary = "Archify knowledge is ready, but the design packet has not been generated yet.";
+    nextStep = "Ask your AI assistant to use Archify on this repo, or run `npx archify generate .` if you want the design packet now.";
+  } else if (designPacketStale) {
+    recommendedAction = "generate";
+    summary = "Archify knowledge is ready, but the design packet is older than the latest analysis.";
+    nextStep = "Ask your AI assistant to use Archify on this repo so it can refresh the design packet, or run `npx archify generate .` manually.";
+  }
 
   return {
     command: "status",
@@ -192,12 +308,11 @@ export async function statusCommand(repoRoot) {
     outputDirExists,
     analysisReady,
     generatedPacketReady,
-    summary: analysisReady
-      ? "Archify is set up and repository knowledge is available."
-      : "Archify is set up, but repository knowledge has not been built yet.",
-    nextStep: analysisReady
-      ? "Ask your AI assistant to use Archify on this repo, or run `npx archify clean` to remove generated artifacts."
-      : "Ask your AI assistant to use Archify on this repo, or run `npx archify analyze .` if you want to build the knowledge base manually.",
+    knowledgeStale,
+    designPacketStale,
+    recommendedAction,
+    summary,
+    nextStep,
     config: {
       installMode: config.skillInstall.mode,
       platforms: config.skillInstall.platforms,
@@ -211,6 +326,17 @@ export async function statusCommand(repoRoot) {
           generatedAt: manifest.generatedAt ?? null,
         }
       : null,
+    designPacket: designPacket
+      ? {
+          status: designPacket.status ?? "unknown",
+          generatedAt: designPacket.generatedAt ?? null,
+        }
+      : null,
+    freshness: {
+      newestWorkspaceChange,
+      manifestGeneratedAt: manifest?.generatedAt ?? null,
+      designPacketGeneratedAt: designPacket?.generatedAt ?? null,
+    },
     availableArtifacts,
     missingArtifacts,
   };
