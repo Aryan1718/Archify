@@ -1,13 +1,13 @@
 <div align="center">
 
-<p align="center">
-&nbsp;&nbsp;&nbsp;&nbsp;_&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_&nbsp;&nbsp;__<br>
-&nbsp;&nbsp;&nbsp;/&nbsp;\&nbsp;&nbsp;&nbsp;_&nbsp;__&nbsp;___|&nbsp;|__&nbsp;(_)/&nbsp;_|_&nbsp;&nbsp;&nbsp;_<br>
-&nbsp;&nbsp;/&nbsp;_&nbsp;\&nbsp;|&nbsp;'__/&nbsp;__|&nbsp;'_&nbsp;\|&nbsp;|&nbsp;|_||&nbsp;|&nbsp;|&nbsp;|<br>
-&nbsp;/&nbsp;___&nbsp;\|&nbsp;|&nbsp;|&nbsp;(__|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;&nbsp;_|&nbsp;|_|&nbsp;|<br>
-/_/&nbsp;&nbsp;&nbsp;\_\_|&nbsp;&nbsp;\___|_|&nbsp;|_|_|_|&nbsp;&nbsp;\__,&nbsp;|<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|___/
-</p>
+<pre>
+    _              _     _  __
+   / \   _ __ ___| |__ (_)/ _|_   _
+  / _ \ | '__/ __| '_ \| | |_| | | |
+ / ___ \| | | (__| | | | |  _| |_| |
+/_/   \_\_|  \___|_| |_|_|_|  \__, |
+                              |___/
+</pre>
 
 <p><strong>Grounded repository architecture setup</strong></p>
 
