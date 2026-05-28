@@ -9,13 +9,13 @@
                               |___/
 </pre>
 
-<p><strong>Grounded repository architecture setup</strong></p>
+<p><strong>Grounded codebase documentation setup</strong></p>
 
 <p><code>npx archify init</code></p>
 
 </div>
 
-Archify prepares a repository for architecture understanding. It sets up project configuration, builds grounded repository artifacts, and installs the Archify skill for the local workflow.
+Archify is built to generate grounded documentation for a codebase. It creates proof-backed project context that can be used to produce architecture docs, API and contract docs, system setup docs, frontend and backend breakdowns, database documentation, and other repository-level markdown artifacts based on real codebase evidence.
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ Use Archify on this repo
 - Builds a grounded repository knowledge base inside `.archify/`
 - Reuses existing artifacts when they are already fresh
 - Refreshes analysis only when the repository has changed
-- Prepares the design packet used for `archify.md`
+- Prepares the grounded inputs used to write codebase documentation
 
 ## Flow
 
@@ -120,9 +120,23 @@ Archify analyzes repository structure and documentation, including:
 - database and migration files
 - README and supporting architecture documents
 
+## Documentation Output
+
+Archify is designed to support documentation across the codebase, including:
+
+- repository architecture
+- API and contract documentation
+- frontend, backend, and database breakdowns
+- system setup and component relationships
+- grounded markdown documents built from repository evidence
+
 ## Usage Notes
 
 - `init` is the main setup command.
 - `status` is the main inspection command.
 - `analyze` and `generate` are available for manual workflows, but the installed skill is designed to run them when needed.
 - Supporting docs such as `README.md` can be gathered alongside analysis, but grounded `.archify/` artifacts remain the primary source of confirmed facts.
+
+## Built On
+
+Archify builds on a Graphify-style parsing and graph pipeline for codebase extraction, then adds its own `.archify/` artifact layer and documentation workflow on top.
