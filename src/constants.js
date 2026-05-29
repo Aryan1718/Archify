@@ -5,7 +5,6 @@ export const CONFIG_FILE = "archify.config.json";
 export const IGNORE_FILE = ".archifyignore";
 export const OUTPUT_DIR = ".archify";
 export const PROJECT_SKILL_DIR = path.join(".agents", "skills", "archify");
-export const SHARED_GLOBAL_SKILL_DIR = path.join(os.homedir(), ".agents", "skills", "archify");
 export const PROJECT_CLAUDE_SKILL_DIR = path.join(".claude", "skills", "archify");
 export const SKILL_TEMPLATE_VERSION = 1;
 export const INSTALL_MODES = ["project", "global"];
@@ -52,7 +51,15 @@ export const OPERATIONAL_ARTIFACTS = [
 
 export const SYNTHESIS_ARTIFACTS = [
   "design-packet.json",
-  "design-brief.md"
+  "design-brief.md",
+  "archify.guide.json",
+  "archify.guide.md"
+];
+
+export const ALL_ANALYSIS_ARTIFACTS = [
+  ...RESERVED_ARTIFACTS,
+  ...OPERATIONAL_ARTIFACTS,
+  ...SYNTHESIS_ARTIFACTS
 ];
 
 export const DEFAULT_CONFIG = {
@@ -116,3 +123,8 @@ export const DEFAULT_IGNORE_LINES = [
   "dist/",
   "build/"
 ];
+
+export function getSharedGlobalSkillDir() {
+  const homeDir = process.env.HOME || os.homedir();
+  return path.join(homeDir, ".agents", "skills", "archify");
+}

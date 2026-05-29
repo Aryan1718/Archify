@@ -88,17 +88,24 @@ test("bare archify runs setup for the current project and installs both Codex an
   const codexSkill = await fs.readFile(path.join(cwd, ".agents", "skills", "archify", "SKILL.md"), "utf8");
   assert.match(codexSkill, /^---\nname: archify\ndescription:/);
   assert.match(codexSkill, /invokes this `archify` skill instead of manually calling Archify subcommands/i);
-  assert.match(codexSkill, /Check whether `archify\.config\.json` exists in the current project before starting analysis/i);
-  assert.match(codexSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
-  assert.match(codexSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
+  assert.match(codexSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
+  assert.match(codexSkill, /The user runs `npx archify init` once in this repository/i);
+  assert.match(codexSkill, /checks Archify status first, runs only the missing or stale internal steps/i);
+  assert.match(codexSkill, /Start by checking `npx archify status`/i);
+  assert.match(codexSkill, /If setup is missing, initialize\. If knowledge is missing or stale, analyze\. If the design packet is missing or stale, generate\. If everything is fresh, reuse it\./i);
   assert.match(codexSkill, /Ask for permission before starting `npx archify analyze \.`/i);
   assert.match(codexSkill, /building `?\.archify\/`? can take time on larger repositories/i);
-  assert.match(codexSkill, /start one bounded README\/context subagent in parallel with the analysis step/i);
-  assert.match(codexSkill, /Do not block on the README\/context subagent before `analyze` finishes/i);
+  assert.match(codexSkill, /start one bounded README\/context pass in parallel with the analysis step/i);
+  assert.match(codexSkill, /docs\/architecture\.md/i);
+  assert.match(codexSkill, /supporting-doc context rather than confirmed code facts/i);
+  assert.match(codexSkill, /Do not block on the README\/context pass before `analyze` finishes/i);
   assert.match(codexSkill, /If `npx` hangs or is unreliable in a local checkout, fall back to `node \.\/bin\/archify\.js analyze \.`/i);
   assert.match(codexSkill, /If `npx` is unreliable in a local checkout, fall back to `node \.\/bin\/archify\.js generate \.`/i);
-  assert.match(codexSkill, /Verify that `\.archify\/design-packet\.json` exists after `generate`/i);
+  assert.match(codexSkill, /After `generate`, run `npx archify status` again and only continue if the design packet is ready and not stale\./i);
   assert.match(codexSkill, /Always start from `\.archify\/design-packet\.json`/i);
+  assert.match(codexSkill, /Read `\.archify\/archify\.guide\.json` second/i);
+  assert.match(codexSkill, /Always read `\.archify\/archify\.guide\.json` immediately after the design packet/i);
+  assert.match(codexSkill, /Draft `archify\.md` section by section using the guide's `sectionPlan`/i);
   assert.match(codexSkill, /upload-ready architecture prompt pack/i);
   assert.match(codexSkill, /Include explicit `System Prompt`, `User Prompt`, `Grounded Repository Context`, `Questions Before Architecture Generation`, and `Diagram \/ Image Generation Instructions` sections/i);
   assert.match(codexSkill, /Make the first response ask which architecture artifact the user wants/i);
@@ -113,13 +120,18 @@ test("bare archify runs setup for the current project and installs both Codex an
   const claudeSkill = await fs.readFile(path.join(cwd, ".claude", "skills", "archify", "SKILL.md"), "utf8");
   assert.match(claudeSkill, /^---\nname: archify\ndescription:/);
   assert.match(claudeSkill, /Claude Code/i);
-  assert.match(claudeSkill, /Check whether `archify\.config\.json` exists in the current project before starting analysis/i);
-  assert.match(claudeSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
-  assert.match(claudeSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
+  assert.match(claudeSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
+  assert.match(claudeSkill, /The user runs `npx archify init` once in this repository/i);
+  assert.match(claudeSkill, /checks Archify status first, runs only the missing or stale internal steps/i);
+  assert.match(claudeSkill, /Start by checking `npx archify status`/i);
+  assert.match(claudeSkill, /If setup is missing, initialize\. If knowledge is missing or stale, analyze\. If the design packet is missing or stale, generate\. If everything is fresh, reuse it\./i);
   assert.match(claudeSkill, /Ask for permission before starting `npx archify analyze \.`/i);
-  assert.match(claudeSkill, /Read the root `README\.md` first when it is present/i);
+  assert.match(claudeSkill, /read the root `README\.md` when present plus a small set of similar top-level docs/i);
+  assert.match(claudeSkill, /in parallel with the analysis step/i);
   assert.match(claudeSkill, /supportingDocuments\.primaryReadme/i);
   assert.match(claudeSkill, /Always start from `\.archify\/design-packet\.json`/i);
+  assert.match(claudeSkill, /Read `\.archify\/archify\.guide\.json` second/i);
+  assert.match(claudeSkill, /Draft `archify\.md` section by section using the guide's `sectionPlan`/i);
   assert.match(claudeSkill, /upload-ready architecture prompt pack/i);
   assert.match(claudeSkill, /System Prompt/i);
   assert.match(claudeSkill, /User Prompt/i);
@@ -167,15 +179,19 @@ test("init supports shared global install mode and is idempotent", async () => {
   assert.match(sharedSkill, /Codex workflow:/i);
   assert.match(sharedSkill, /Claude Code workflow:/i);
   assert.match(sharedSkill, /Generic fallback workflow:/i);
-  assert.match(sharedSkill, /Check whether `archify\.config\.json` exists in the current project before starting analysis/i);
-  assert.match(sharedSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
-  assert.match(sharedSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
-  assert.match(sharedSkill, /If the project is not initialized yet, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform both`/i);
-  assert.match(sharedSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
-  assert.match(sharedSkill, /start one bounded README\/context subagent in parallel with the analysis step/i);
-  assert.match(sharedSkill, /Do not block on the README\/context subagent before `analyze` finishes/i);
-  assert.match(sharedSkill, /Read the root `README\.md` first when it is present/i);
-  assert.match(sharedSkill, /do not start agent-specific subagents or parallel branches when detection is unclear/i);
+  assert.match(sharedSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
+  assert.match(sharedSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
+  assert.match(sharedSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform both`/i);
+  assert.match(sharedSkill, /The user runs `npx archify init` once in the repository they want to work on/i);
+  assert.match(sharedSkill, /checks Archify status first, runs only the missing or stale internal steps/i);
+  assert.match(sharedSkill, /Start by checking `npx archify status`/i);
+  assert.match(sharedSkill, /If setup is missing, initialize\. If knowledge is missing or stale, analyze\. If the design packet is missing or stale, generate\. If everything is fresh, reuse it\./i);
+  assert.match(sharedSkill, /Read `\.archify\/archify\.guide\.json` second/i);
+  assert.match(sharedSkill, /Draft `archify\.md` section by section using the guide's `sectionPlan`/i);
+  assert.match(sharedSkill, /start one bounded README\/context pass in parallel with the analysis step/i);
+  assert.match(sharedSkill, /Do not block on the README\/context pass before `analyze` finishes/i);
+  assert.match(sharedSkill, /read the root `README\.md` when present plus a small set of similar top-level docs/i);
+  assert.match(sharedSkill, /do not start agent-specific subagents when detection is unclear/i);
   assert.ok(!(await fs.access(path.join(fakeHome, ".claude", "skills", "archify", "SKILL.md")).then(() => true).catch(() => false)));
 });
 
@@ -201,8 +217,8 @@ test("init supports installing into another project path for the selected platfo
   await fs.access(path.join(targetProject, ".archifyignore"));
   await fs.access(path.join(targetProject, ".claude", "skills", "archify", "SKILL.md"));
   const installedClaudeSkill = await fs.readFile(path.join(targetProject, ".claude", "skills", "archify", "SKILL.md"), "utf8");
-  assert.match(installedClaudeSkill, /Check whether `archify\.config\.json` exists in the current project before starting analysis/i);
-  assert.match(installedClaudeSkill, /Run project initialization automatically when `archify\.config\.json` is missing/i);
+  assert.match(installedClaudeSkill, /Start by checking `npx archify status`/i);
+  assert.match(installedClaudeSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
   assert.ok(!(await fs.access(path.join(targetProject, ".agents", "skills", "archify", "SKILL.md")).then(() => true).catch(() => false)));
   assert.ok(!(await fs.access(path.join(launcher, "archify.config.json")).then(() => true).catch(() => false)));
 });
@@ -393,11 +409,13 @@ test("generate writes an internal design packet from grounded .archify artifacts
   const result = runCli(["generate", "."], { cwd });
   assert.equal(result.status, 0, result.stderr);
   const parsed = parseStdoutJson(result);
-  assert.match(parsed.result.note, /Phase 9 design packet/i);
+  assert.match(parsed.result.note, /Phase 9 design packet and archify guide/i);
   assert.match(parsed.result.note, /prompt-pack authoring/i);
 
   const packet = await readJson(path.join(cwd, ".archify", "design-packet.json"));
   const brief = await fs.readFile(path.join(cwd, ".archify", "design-brief.md"), "utf8");
+  const guide = await readJson(path.join(cwd, ".archify", "archify.guide.json"));
+  const guideBrief = await fs.readFile(path.join(cwd, ".archify", "archify.guide.md"), "utf8");
 
   assert.equal(packet.status, "ready");
   assert.equal(packet.phase, "generate");
@@ -428,6 +446,28 @@ test("generate writes an internal design packet from grounded .archify artifacts
   assert.equal(packet.generationRules.questionnairePolicy.readmeMayEnrichWithoutOverridingGroundedEvidence, true);
   assert.ok(packet.confirmedFromCodebase.length >= 2);
   assert.ok(packet.openQuestionsAndUncertainty.length >= 1);
+  assert.equal(guide.status, "ready");
+  assert.equal(guide.phase, "generate");
+  assert.equal(guide.docType, "archify");
+  assert.equal(guide.outputFile, "archify.md");
+  assert.equal(guide.readOrder[0], ".archify/design-packet.json");
+  assert.equal(guide.readOrder[1], ".archify/archify.guide.json");
+  assert.ok(guide.primaryArtifacts.includes(".archify/architecture-context.json"));
+  assert.ok(guide.sectionPlan.some((item) => item.section === "Grounded Repository Context"));
+  assert.ok(guide.sectionPlan.some((item) => item.section === "Confirmed From Codebase"));
+  assert.ok(Array.isArray(guide.draftingWorkflow));
+  assert.ok(guide.draftingWorkflow.some((item) => /section by section/i.test(item)));
+  const groundedSection = guide.sectionPlan.find((item) => item.section === "Grounded Repository Context");
+  assert.ok(groundedSection);
+  assert.ok(groundedSection.sourceFields.includes("confirmedFromCodebase"));
+  assert.ok(Array.isArray(groundedSection.draftingInstructions));
+  assert.ok(groundedSection.draftingInstructions.length >= 1);
+  assert.match(groundedSection.missingEvidenceBehavior, /evidence/i);
+  assert.ok(Array.isArray(groundedSection.validationChecks));
+  assert.ok(groundedSection.validationChecks.length >= 1);
+  assert.ok(guide.forbiddenBehaviors.some((item) => /Do not inspect the whole repository/i.test(item)));
+  assert.ok(guide.validationChecks.some((item) => /Read `\.archify\/archify\.guide\.json` before reading repository files/i.test(item)));
+  assert.ok(guide.validationChecks.some((item) => /Draft and validate `archify\.md` section by section/i.test(item)));
   assert.match(brief, /Start from `\.archify\/design-packet\.json`/);
   assert.match(brief, /primary grounded source of confirmed facts/);
   assert.match(brief, /supportingDocuments\.primaryReadme/);
@@ -440,6 +480,14 @@ test("generate writes an internal design packet from grounded .archify artifacts
   assert.match(brief, /first guided interaction must ask which architecture artifact the user wants/i);
   assert.match(brief, /second guided interaction must ask how the architecture should look visually/i);
   assert.match(brief, /render-ready diagram prompt or specification/i);
+  assert.match(guideBrief, /# Archify Guide Brief/);
+  assert.match(guideBrief, /Doc type: `archify`/);
+  assert.match(guideBrief, /`\.archify\/archify\.guide\.json`/);
+  assert.match(guideBrief, /## Drafting Workflow/);
+  assert.match(guideBrief, /Field: `confirmedFromCodebase`/);
+  assert.match(guideBrief, /Missing evidence:/);
+  assert.match(guideBrief, /Grounded Repository Context/);
+  assert.match(guideBrief, /Do not inspect the whole repository/i);
   assert.ok(!(await fs.access(path.join(cwd, "architecture.md")).then(() => true).catch(() => false)));
   assert.ok(!(await fs.access(path.join(cwd, "design.md")).then(() => true).catch(() => false)));
   assert.ok(!(await fs.access(path.join(cwd, "archify.md")).then(() => true).catch(() => false)));
@@ -543,6 +591,78 @@ test("clean removes generated artifacts but preserves config and ignore files", 
 
   await fs.access(path.join(cwd, "archify.config.json"));
   await fs.access(path.join(cwd, ".archifyignore"));
+});
+
+test("status explains setup state before and after analysis", async () => {
+  const cwd = await makeWorkspace();
+
+  let result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  let parsed = parseStdoutJson(result);
+  assert.equal(parsed.installed, false);
+  assert.match(parsed.nextStep, /npx archify init/i);
+
+  assert.equal(runInit({ cwd, projectPath: "." }).status, 0);
+
+  result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  parsed = parseStdoutJson(result);
+  assert.equal(parsed.installed, true);
+  assert.equal(parsed.analysisReady, false);
+  assert.equal(parsed.recommendedAction, "analyze");
+  assert.match(parsed.summary, /not been built yet/i);
+
+  assert.equal(runCli(["analyze", "."], { cwd }).status, 0);
+
+  result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  parsed = parseStdoutJson(result);
+  assert.equal(parsed.installed, true);
+  assert.equal(parsed.analysisReady, true);
+  assert.equal(parsed.knowledgeStale, false);
+  assert.equal(parsed.recommendedAction, "generate");
+  assert.ok(parsed.availableArtifacts.includes("manifest.json"));
+});
+
+test("status reports stale knowledge after repository files change", async () => {
+  const cwd = await makeWorkspace();
+  await fs.mkdir(path.join(cwd, "src"), { recursive: true });
+  await fs.writeFile(path.join(cwd, "src", "app.py"), "print('v1')\n", "utf8");
+  assert.equal(runInit({ cwd, projectPath: "." }).status, 0);
+  assert.equal(runCli(["analyze", "."], { cwd }).status, 0);
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  await fs.writeFile(path.join(cwd, "src", "app.py"), "print('v2')\n", "utf8");
+
+  const result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = parseStdoutJson(result);
+  assert.equal(parsed.analysisReady, true);
+  assert.equal(parsed.knowledgeStale, true);
+  assert.equal(parsed.recommendedAction, "analyze");
+  assert.equal(parsed.freshness.newestWorkspaceChange.path, "src/app.py");
+});
+
+test("status reports stale design packet after analysis is refreshed", async () => {
+  const cwd = await makeWorkspace();
+  await fs.mkdir(path.join(cwd, "src"), { recursive: true });
+  await fs.writeFile(path.join(cwd, "src", "app.py"), "print('v1')\n", "utf8");
+  assert.equal(runInit({ cwd, projectPath: "." }).status, 0);
+  assert.equal(runCli(["analyze", "."], { cwd }).status, 0);
+  assert.equal(runCli(["generate", "."], { cwd }).status, 0);
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  await fs.writeFile(path.join(cwd, "src", "app.py"), "print('v2')\n", "utf8");
+  assert.equal(runCli(["analyze", "."], { cwd }).status, 0);
+
+  const result = runCli(["status"], { cwd });
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = parseStdoutJson(result);
+  assert.equal(parsed.analysisReady, true);
+  assert.equal(parsed.generatedPacketReady, true);
+  assert.equal(parsed.knowledgeStale, false);
+  assert.equal(parsed.designPacketStale, true);
+  assert.equal(parsed.recommendedAction, "generate");
 });
 
 test("analyze honors .archifyignore, skips sensitive files, and reports real counts deterministically", async () => {
@@ -668,7 +788,7 @@ print(validate_extraction(payload))
   });
 
   assert.equal(result.status, 0, result.stderr);
-  const lines = result.stdout.trim().split("\n");
+  const lines = result.stdout.trim().split(/\r?\n/);
   assert.equal(lines[0], "file_src_app_py");
   assert.equal(lines[1], "symbol_src_app_py_function_run");
   assert.match(lines[2], /invalid confidence/);

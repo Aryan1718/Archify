@@ -5,7 +5,8 @@ import {
   analyzeCommand,
   cleanCommand,
   generateCommand,
-  initCommand
+  initCommand,
+  statusCommand
 } from "./commands.js";
 import { ArchifyError } from "./errors.js";
 
@@ -13,18 +14,21 @@ function printUsage() {
   console.log(`Archify Phase 0
 
 Usage:
-  npx archify [--install-mode global]
-  npx archify [--install-mode project --project-path <path> --platform codex|claude-code|both]
   npx archify init [--install-mode global]
   npx archify init [--install-mode project --project-path <path> --platform codex|claude-code|both]
+  npx archify status
   npx archify analyze <path>
   npx archify generate <path>
   npx archify clean
 
 Recommended flow:
-  1. Run \`npx archify\` once and choose a shared global install or a project path plus one-or-more platforms.
-  2. Invoke the installed \`archify\` skill in your agent.
-  3. Let the skill run \`analyze\` and \`generate\` internally.
+  1. Run \`npx archify init\` once in the repository you want to work on.
+  2. Ask your AI assistant to use Archify on that repo.
+  3. Let the agent refresh \`.archify/\` knowledge and generate outputs internally.
+
+Notes:
+  - \`init\` is the normal setup command for end users.
+  - \`analyze\` and \`generate\` are still available for manual or advanced workflows.
 `);
 }
 
@@ -86,6 +90,9 @@ export async function main(argv) {
     switch (command || "init") {
       case "init":
         result = await initCommand(repoRoot, options);
+        break;
+      case "status":
+        result = await statusCommand(repoRoot);
         break;
       case "analyze":
         result = await analyzeCommand(appRoot, repoRoot, rest[0]);

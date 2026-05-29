@@ -410,7 +410,7 @@ def _brief_list(items: list[str], *, limit: int = 3) -> list[str]:
 
 
 def _artifact_relpath(config: EngineConfig, name: str) -> str:
-    return str(Path(config.output_dir.name) / name)
+    return Path(config.output_dir.name, name).as_posix()
 
 
 QUESTIONNAIRE_TEMPLATE = [
@@ -733,6 +733,265 @@ def _build_design_packet(target_path: str, config: EngineConfig) -> dict[str, An
     }
 
 
+def _build_archify_guide(packet: dict[str, Any], config: EngineConfig) -> dict[str, Any]:
+    artifacts = packet.get("artifacts", {})
+    supporting_documents = packet.get("supportingDocuments", {})
+    generation_rules = packet.get("generationRules", {})
+    questionnaire = packet.get("questionnaireTemplate", {})
+    prompt_behavior = generation_rules.get("promptBehavior", {})
+    diagram_policy = generation_rules.get("diagramCapabilityPolicy", {})
+
+    read_order = [
+        _artifact_relpath(config, "design-packet.json"),
+        _artifact_relpath(config, "archify.guide.json"),
+        *[
+            item
+            for item in generation_rules.get("readOrder", [])
+            if item != _artifact_relpath(config, "design-packet.json")
+        ],
+    ]
+
+    section_plan = [
+        {
+            "section": "System Prompt",
+            "required": True,
+            "sourceArtifacts": [_artifact_relpath(config, "design-packet.json")],
+            "sourceFields": ["generationRules.requiredSections", "generationRules.documentShape"],
+            "factPolicy": "instruction_only",
+            "draftingInstructions": [
+                "Define the assistant role, grounding expectations, and factuality constraints.",
+                "State that `.archify` artifacts are the primary source of truth.",
+            ],
+            "missingEvidenceBehavior": "Do not invent repository facts in this section. Keep it as instruction-only content.",
+            "validationChecks": [
+                "Keep this section instructional, not descriptive of unverified repository details.",
+                "Mention grounded `.archify` evidence as the primary source of confirmed facts.",
+            ],
+        },
+        {
+            "section": "User Prompt",
+            "required": True,
+            "sourceArtifacts": [_artifact_relpath(config, "design-packet.json")],
+            "sourceFields": ["questionnaireTemplate", "generationRules.promptBehavior"],
+            "factPolicy": "instruction_only",
+            "draftingInstructions": [
+                "Tell the downstream AI what to produce using the grounded repository context.",
+                "Preserve the guided interaction requirements from the packet.",
+            ],
+            "missingEvidenceBehavior": "Do not add repository-specific claims unless they are already grounded elsewhere in the packet.",
+            "validationChecks": [
+                "Preserve the requirement to ask which architecture artifact the user wants.",
+                "Preserve the requirement to ask for visual style before visual generation.",
+            ],
+        },
+        {
+            "section": "Grounded Repository Context",
+            "required": True,
+            "sourceArtifacts": [
+                artifacts.get("architectureContext"),
+                artifacts.get("architectureContextMarkdown"),
+                artifacts.get("facts"),
+                artifacts.get("modules"),
+                artifacts.get("services"),
+                artifacts.get("routes"),
+                artifacts.get("database"),
+                artifacts.get("dependencies"),
+            ],
+            "sourceFields": ["confirmedFromCodebase", "groundedRepositoryContext"],
+            "factPolicy": "confirmed_first",
+            "draftingInstructions": [
+                "Summarize the system, subsystems, interfaces, dependencies, routes, and data concerns from the listed artifacts.",
+                "Prefer compact factual statements over exhaustive dumps.",
+            ],
+            "missingEvidenceBehavior": "If a subsystem or concern is not supported by the listed artifacts, omit it or explicitly mark evidence as insufficient.",
+            "validationChecks": [
+                "Every major claim should map back to at least one listed artifact.",
+                "Do not blend inferred architecture into this section without labeling it.",
+            ],
+        },
+        {
+            "section": "Confirmed From Codebase",
+            "required": True,
+            "sourceArtifacts": [
+                artifacts.get("architectureContext"),
+                artifacts.get("facts"),
+                artifacts.get("modules"),
+                artifacts.get("services"),
+                artifacts.get("routes"),
+                artifacts.get("database"),
+                artifacts.get("dependencies"),
+            ],
+            "sourceFields": ["confirmedFromCodebase"],
+            "factPolicy": "confirmed_only",
+            "draftingInstructions": [
+                "Use only packet entries already categorized as confirmed.",
+                "Preserve evidence-backed distinctions such as subsystem inventory, interfaces, services, routes, and data stores.",
+            ],
+            "missingEvidenceBehavior": "If there are few confirmed items for a topic, state that the codebase evidence is limited instead of filling gaps.",
+            "validationChecks": [
+                "Every bullet or paragraph in this section must come from confirmed packet content.",
+                "Do not introduce README-only or inferred claims here.",
+            ],
+        },
+        {
+            "section": "Inferred Architecture",
+            "required": True,
+            "sourceArtifacts": [
+                artifacts.get("architectureContext"),
+                artifacts.get("architectureContextMarkdown"),
+            ],
+            "sourceFields": ["inferredArchitecture"],
+            "factPolicy": "inferred_must_be_labeled",
+            "draftingInstructions": [
+                "Summarize architectural implications synthesized from grounded relationships.",
+                "Use explicit labels such as `Inferred` when describing boundaries, flows, or responsibilities not directly declared.",
+            ],
+            "missingEvidenceBehavior": "If the packet has no meaningful inferred items, say that no strong additional architectural inference was derived.",
+            "validationChecks": [
+                "Every statement in this section should be explicitly framed as inference.",
+                "Do not move inferred content into confirmed sections.",
+            ],
+        },
+        {
+            "section": "Open Questions / Uncertainty",
+            "required": True,
+            "sourceArtifacts": [
+                artifacts.get("architectureContext"),
+                artifacts.get("docsSummary"),
+            ],
+            "sourceFields": ["openQuestionsAndUncertainty"],
+            "factPolicy": "uncertainty_only",
+            "draftingInstructions": [
+                "List unresolved architecture questions, ambiguous boundaries, and missing evidence areas.",
+                "Keep uncertainty actionable and specific.",
+            ],
+            "missingEvidenceBehavior": "If the packet has no open questions, state that no major unresolved questions were extracted from the grounded artifacts.",
+            "validationChecks": [
+                "Do not convert uncertainty into factual statements.",
+                "Keep this section focused on ambiguity, missing evidence, or decisions needing user input.",
+            ],
+        },
+        {
+            "section": "Questions Before Architecture Generation",
+            "required": True,
+            "sourceArtifacts": [_artifact_relpath(config, "design-packet.json")],
+            "sourceFields": ["questionnaireTemplate.sectionTitle", "questionnaireTemplate.questions"],
+            "factPolicy": "instruction_only",
+            "draftingInstructions": [
+                "Preserve the packet questionnaire as a pre-generation gating step.",
+                "Keep the questions focused on user intent, flows, constraints, and scope.",
+            ],
+            "missingEvidenceBehavior": "Do not replace the questionnaire with assumptions.",
+            "validationChecks": [
+                "Keep the section title from the packet.",
+                "Preserve the requirement to ask these questions before final architecture output.",
+            ],
+        },
+        {
+            "section": "Diagram / Image Generation Instructions",
+            "required": True,
+            "sourceArtifacts": [_artifact_relpath(config, "design-packet.json")],
+            "sourceFields": ["generationRules.diagramCapabilityPolicy", "generationRules.promptBehavior"],
+            "factPolicy": "instruction_only",
+            "draftingInstructions": [
+                "Tell capable apps to generate visuals directly and other apps to return render-ready diagram specifications.",
+                "Preserve the visual-style question and wait-for-answer requirement.",
+            ],
+            "missingEvidenceBehavior": "Do not invent diagram content beyond what the grounded context supports.",
+            "validationChecks": [
+                "State the direct image-generation behavior when supported.",
+                "State the fallback render-ready specification behavior when image generation is unavailable.",
+            ],
+        },
+    ]
+
+    fallback_repo_reads = []
+    primary_readme = supporting_documents.get("primaryReadme")
+    if primary_readme:
+        fallback_repo_reads.append(
+            {
+                "path": primary_readme,
+                "reason": "Supporting product and usage context referenced by the design packet.",
+            }
+        )
+    for path in supporting_documents.get("additionalDocs", []):
+        fallback_repo_reads.append(
+            {
+                "path": path,
+                "reason": "Optional supporting context referenced by the design packet.",
+            }
+        )
+
+    return {
+        "artifact": "archify.guide.json",
+        "status": "ready",
+        "phase": "generate",
+        "docType": "archify",
+        "outputFile": "archify.md",
+        "targetPath": packet.get("targetPath"),
+        "goal": "Guide the agent to write `archify.md` from grounded `.archify` artifacts with minimal extra repository reads.",
+        "primaryArtifacts": [
+            _artifact_relpath(config, "design-packet.json"),
+            artifacts.get("architectureContext"),
+            artifacts.get("architectureContextMarkdown"),
+            artifacts.get("facts"),
+            artifacts.get("modules"),
+            artifacts.get("services"),
+            artifacts.get("routes"),
+            artifacts.get("database"),
+            artifacts.get("dependencies"),
+            artifacts.get("docsSummary"),
+        ],
+        "readOrder": [item for item in read_order if item],
+        "sectionPlan": [
+            {
+                **item,
+                "sourceArtifacts": [artifact for artifact in item.get("sourceArtifacts", []) if artifact],
+            }
+            for item in section_plan
+        ],
+        "factPolicy": {
+            "confirmed": "Only state items as confirmed when they are directly supported by the listed `.archify` artifacts.",
+            "inferred": "Use inferred statements only when synthesized from artifact relationships and label them explicitly as inferred.",
+            "missingEvidence": "If the artifacts do not support a claim, state that repository evidence is insufficient instead of guessing.",
+            "supportingDocs": "Treat README and optional supporting docs as secondary context that cannot override grounded `.archify` evidence.",
+        },
+        "draftingWorkflow": [
+            "Read `.archify/design-packet.json`.",
+            "Read `.archify/archify.guide.json`.",
+            "Read only the artifacts listed in `readOrder`.",
+            "Draft `archify.md` section by section using `sectionPlan`.",
+            "Run section-level validation using each section's `validationChecks`.",
+            "Run final document validation using `validationChecks` before finalizing output.",
+        ],
+        "fallbackRepoReads": fallback_repo_reads,
+        "forbiddenBehaviors": [
+            "Do not inspect the whole repository before reading the guide and the referenced `.archify` artifacts.",
+            "Do not present README-only or supporting-doc-only claims as confirmed codebase facts.",
+            "Do not invent rationale, deployment boundaries, or undocumented architecture decisions.",
+            "Do not write any primary output file other than `archify.md`.",
+        ],
+        "promptBehavior": {
+            "firstResponseMustAskArtifactType": prompt_behavior.get("firstResponseMustAskArtifactType", False),
+            "artifactTypeOptions": prompt_behavior.get("artifactTypeOptions", []),
+            "firstResponseMustAskVisualStyle": prompt_behavior.get("firstResponseMustAskVisualStyle", False),
+            "mustAllowCustomAnswers": prompt_behavior.get("mustAllowCustomAnswers", False),
+            "mustWaitForAnswersBeforeFinalOutput": prompt_behavior.get("mustWaitForAnswersBeforeFinalOutput", False),
+        },
+        "questionnaire": questionnaire,
+        "diagramCapabilityPolicy": diagram_policy,
+        "validationChecks": [
+            "Read `.archify/design-packet.json` before any other synthesis artifact.",
+            "Read `.archify/archify.guide.json` before reading repository files outside `.archify`.",
+            "Draft and validate `archify.md` section by section using `sectionPlan`.",
+            "Ensure every major section is traceable to the listed source artifacts.",
+            "Ensure inferred statements are labeled and kept separate from confirmed facts.",
+            "Ensure unsupported claims are replaced with explicit uncertainty or missing-evidence language.",
+            "Ensure the final document includes `System Prompt`, `User Prompt`, `Grounded Repository Context`, `Questions Before Architecture Generation`, and `Diagram / Image Generation Instructions`.",
+        ],
+    }
+
+
 def _render_design_brief(packet: dict[str, Any]) -> str:
     system_summary = packet.get("summaries", {}).get("system", {}).get("summary", "")
     subsystem_items = packet.get("confirmedFromCodebase", [])[1].get("items", []) if len(packet.get("confirmedFromCodebase", [])) > 1 else []
@@ -798,6 +1057,56 @@ def _render_design_brief(packet: dict[str, Any]) -> str:
         "- Cite evidence references from the packet in each major section.",
         "- Do not create `archify_design.md`, `architecture.md`, `design.md`, or root `diagram-prompt.md` as the main output.",
     ])
+    return "\n".join(lines) + "\n"
+
+
+def _render_archify_guide_brief(guide: dict[str, Any]) -> str:
+    lines = [
+        "# Archify Guide Brief",
+        "",
+        f"Doc type: `{guide.get('docType', '')}`",
+        f"Output file: `{guide.get('outputFile', '')}`",
+        "",
+        guide.get("goal", ""),
+        "",
+        "## Read Order",
+    ]
+    lines.extend(f"- `{item}`" for item in guide.get("readOrder", []))
+    lines.extend([
+        "",
+        "## Drafting Workflow",
+    ])
+    lines.extend(f"- {item}" for item in guide.get("draftingWorkflow", []))
+    lines.extend([
+        "",
+        "## Fact Rules",
+        f"- Confirmed: {guide.get('factPolicy', {}).get('confirmed', '')}",
+        f"- Inferred: {guide.get('factPolicy', {}).get('inferred', '')}",
+        f"- Missing evidence: {guide.get('factPolicy', {}).get('missingEvidence', '')}",
+        f"- Supporting docs: {guide.get('factPolicy', {}).get('supportingDocs', '')}",
+        "",
+        "## Required Sections",
+    ])
+    for item in guide.get("sectionPlan", []):
+        if not item.get("section"):
+            continue
+        artifacts = ", ".join(f"`{artifact}`" for artifact in item.get("sourceArtifacts", []))
+        lines.append(f"- `{item.get('section', '')}` from {artifacts}")
+        for field in item.get("sourceFields", []):
+            lines.append(f"  Field: `{field}`")
+        for instruction in item.get("draftingInstructions", []):
+            lines.append(f"  Drafting: {instruction}")
+        lines.append(f"  Missing evidence: {item.get('missingEvidenceBehavior', '')}")
+    lines.extend([
+        "",
+        "## Validation Checks",
+    ])
+    lines.extend(f"- {item}" for item in guide.get("validationChecks", []))
+    lines.extend([
+        "",
+        "## Forbidden Behaviors",
+    ])
+    lines.extend(f"- {item}" for item in guide.get("forbiddenBehaviors", []))
     return "\n".join(lines) + "\n"
 
 
@@ -1187,16 +1496,21 @@ def analyze(target_path: str, config: EngineConfig) -> dict[str, Any]:
 
 def generate(target_path: str, config: EngineConfig) -> dict[str, Any]:
     packet = _build_design_packet(target_path, config)
+    guide = _build_archify_guide(packet, config)
     packet_path = config.output_dir / "design-packet.json"
     brief_path = config.output_dir / "design-brief.md"
+    guide_path = config.output_dir / "archify.guide.json"
+    guide_brief_path = config.output_dir / "archify.guide.md"
 
     _atomic_write_json(packet_path, packet)
     _atomic_write_text(brief_path, _render_design_brief(packet))
+    _atomic_write_json(guide_path, guide)
+    _atomic_write_text(guide_brief_path, _render_archify_guide_brief(guide))
 
     return {
         "status": "ok",
         "phase": "generate",
         "targetPath": str(Path(target_path).resolve()),
-        "outputs": [str(packet_path), str(brief_path)],
-        "note": "Phase 9 design packet generated from grounded `.archify/` artifacts for upload-ready `archify.md` prompt-pack authoring.",
+        "outputs": [str(packet_path), str(brief_path), str(guide_path), str(guide_brief_path)],
+        "note": "Phase 9 design packet and archify guide generated from grounded `.archify/` artifacts for upload-ready `archify.md` prompt-pack authoring.",
     }
