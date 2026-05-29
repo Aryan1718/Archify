@@ -1,10 +1,10 @@
 # Incremental Update And Outputs
 
-This is the operational part that makes graphify practical for ongoing development instead of one-shot analysis.
+This is the operational part that makes the reference pipeline practical for ongoing development instead of one-shot analysis.
 
 ## Incremental Update Model
 
-The best reference is [`graphify/watch.py`](/Users/csuftitan/Desktop/graphify/graphify/watch.py), because it contains the code-only rebuild logic used by `graphify update`.
+The best behavioral reference is the incremental update path, because it contains the code-only rebuild logic used by the reference implementation.
 
 Key behaviors to preserve:
 
@@ -14,11 +14,11 @@ Key behaviors to preserve:
 - Re-run build, cluster, analyze, report, and export after the partial rebuild.
 - Avoid LLM work for code-only changes.
 
-This separation is one of the core Graphify design wins. Archify should keep it unless the use case truly cannot distinguish code-only from semantic changes.
+This separation is one of the core reference-design wins. Archify should keep it unless the use case truly cannot distinguish code-only from semantic changes.
 
 ## Locking And Safety
 
-`watch.py` also includes practical protections:
+The incremental rebuild path also includes practical protections:
 
 - per-repo rebuild lock
 - safe handling for corrupt prior `graph.json`
@@ -28,17 +28,19 @@ These are worth copying into a real implementation, even if the first version is
 
 ## Output Set
 
-The base graphify outputs are:
+The base reference outputs are:
 
-- `graphify-out/graph.json`
-- `graphify-out/GRAPH_REPORT.md`
-- `graphify-out/graph.html`
+- `reference-out/graph.json`
+- `reference-out/GRAPH_REPORT.md`
+- `reference-out/graph.html`
 
 Optional outputs:
 
-- wiki markdown under `graphify-out/wiki/`
+- wiki markdown under `reference-out/wiki/`
 - callflow HTML derived from `graph.json` plus report metadata
 - Obsidian vault export
+
+These names describe the reference output contract. Archify maps the same concepts into `.archify/`.
 
 ## `graph.json` Requirements
 
@@ -52,7 +54,7 @@ The Archify adaptation should preserve these properties of the exported graph:
 
 ## Wiki Layer
 
-[`graphify/wiki.py`](/Users/csuftitan/Desktop/graphify/graphify/wiki.py) generates:
+The optional wiki layer generates:
 
 - `index.md`
 - one article per community
@@ -64,10 +66,10 @@ This should remain optional in Archify. It is a consumer of the graph, not a pre
 
 The Archify adaptation should reproduce the intent of:
 
-- [tests/test_pipeline.py](/Users/csuftitan/Desktop/graphify/tests/test_pipeline.py)
-- [tests/test_incremental.py](/Users/csuftitan/Desktop/graphify/tests/test_incremental.py)
-- [tests/test_watch.py](/Users/csuftitan/Desktop/graphify/tests/test_watch.py)
-- [tests/test_wiki.py](/Users/csuftitan/Desktop/graphify/tests/test_wiki.py)
+- pipeline tests
+- incremental update tests
+- update-path tests
+- wiki-layer tests
 
 Minimum acceptance checks:
 

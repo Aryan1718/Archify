@@ -1,29 +1,29 @@
 # Pipeline Overview
 
-`graphify` is organized as a linear pipeline:
+The reference implementation is organized as a linear pipeline:
 
 ```text
 detect -> extract -> build -> cluster -> analyze -> report -> export
 ```
 
-That structure is stated in [ARCHITECTURE.md](/Users/csuftitan/Desktop/graphify/ARCHITECTURE.md) and is reflected in the code layout.
+That structure is reflected in the reference implementation and its architecture docs.
 
 ## Entry Points
 
-Primary orchestration lives in [graphify/__main__.py](/Users/csuftitan/Desktop/graphify/graphify/__main__.py).
+Primary orchestration lives in the CLI entrypoint layer.
 
 Important commands:
 
-- `graphify extract <path>`: full extraction, including semantic/non-code stages.
-- `graphify update <path>`: code-only rebuild path with no LLM dependency.
-- `graphify cluster-only <path>`: rerun community detection and regenerate outputs from an existing graph.
-- `graphify export callflow-html`: render an architecture page from `graph.json` and `GRAPH_REPORT.md`.
+- `extract <path>`: full extraction, including semantic/non-code stages.
+- `update <path>`: code-only rebuild path with no LLM dependency.
+- `cluster-only <path>`: rerun community detection and regenerate outputs from an existing graph.
+- `export callflow-html`: render an architecture page from `graph.json` and `GRAPH_REPORT.md`.
 
 ## Stage Responsibilities
 
 ### 1. Detect
 
-[`graphify/detect.py`](/Users/csuftitan/Desktop/graphify/graphify/detect.py) scans the target tree, filters ignored or sensitive files, classifies content into `code`, `document`, `paper`, `image`, and `video`, and computes corpus-size metadata.
+The detect stage scans the target tree, filters ignored or sensitive files, classifies content into `code`, `document`, `paper`, `image`, and `video`, and computes corpus-size metadata.
 
 Outputs to preserve:
 
@@ -33,7 +33,7 @@ Outputs to preserve:
 
 ### 2. Extract
 
-[`graphify/extract.py`](/Users/csuftitan/Desktop/graphify/graphify/extract.py) performs deterministic local extraction for code and markdown-like AST-supported files. The full product also adds semantic extraction for non-code content through the CLI pipeline.
+The extract stage performs deterministic local extraction for code and markdown-like AST-supported files. The full product also adds semantic extraction for non-code content through the CLI pipeline.
 
 Outputs to preserve:
 
@@ -44,15 +44,15 @@ Outputs to preserve:
 
 ### 3. Build
 
-[`graphify/build.py`](/Users/csuftitan/Desktop/graphify/graphify/build.py) merges extraction fragments into one NetworkX graph, normalizes IDs, preserves direction on edges, tolerates legacy schema variants, and runs deduplication.
+The build stage merges extraction fragments into one graph, normalizes IDs, preserves direction on edges, tolerates legacy schema variants, and runs deduplication.
 
 ### 4. Cluster
 
-[`graphify/cluster.py`](/Users/csuftitan/Desktop/graphify/graphify/cluster.py) groups nodes into communities using Leiden when available, otherwise Louvain, with follow-up splitting for oversized or low-cohesion clusters.
+The cluster stage groups nodes into communities using Leiden when available, otherwise Louvain, with follow-up splitting for oversized or low-cohesion clusters.
 
 ### 5. Analyze
 
-[`graphify/analyze.py`](/Users/csuftitan/Desktop/graphify/graphify/analyze.py) derives graph-level insights:
+The analyze stage derives graph-level insights:
 
 - god nodes
 - surprising connections
@@ -60,18 +60,18 @@ Outputs to preserve:
 
 ### 6. Report
 
-[`graphify/report.py`](/Users/csuftitan/Desktop/graphify/graphify/report.py) turns the graph and analysis results into `GRAPH_REPORT.md`.
+The report stage turns the graph and analysis results into `GRAPH_REPORT.md`.
 
 ### 7. Export
 
-[`graphify/export.py`](/Users/csuftitan/Desktop/graphify/graphify/export.py) writes the durable products:
+The export stage writes the durable products:
 
 - `graph.json`
 - `graph.html`
 - Obsidian-style markdown outputs
 - auxiliary graph formats
 
-[`graphify/wiki.py`](/Users/csuftitan/Desktop/graphify/graphify/wiki.py) adds a wiki-style markdown layer when requested.
+An optional wiki stage adds a wiki-style markdown layer when requested.
 
 ## Two Operating Modes To Mirror
 
@@ -81,11 +81,11 @@ Use this when building the graph from scratch or when non-code inputs changed. T
 
 ### Incremental Update Mode
 
-Use this when only code changed. [`graphify/watch.py`](/Users/csuftitan/Desktop/graphify/graphify/watch.py) is the practical reference: re-extract changed code files, preserve semantic nodes from the previous graph, recluster, and regenerate outputs.
+Use this when only code changed. The incremental update path should re-extract changed code files, preserve semantic nodes from the previous graph, recluster, and regenerate outputs.
 
-## Implementation Order For A Clone
+## Implementation Order For Archify
 
 1. Reproduce `detect`, local `extract`, `build`, `cluster`, `analyze`, `report`, and `graph.json`.
-2. Add `update` semantics based on `watch.py`.
+2. Add update semantics based on the incremental rebuild path.
 3. Add HTML/wiki/report polish.
 4. Add semantic and media extraction behind the same graph schema.

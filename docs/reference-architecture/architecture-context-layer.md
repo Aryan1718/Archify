@@ -1,12 +1,12 @@
 # Architecture Context Layer
 
-This note describes the next layer to build on top of Graphify for the Archify use case.
+This note describes the next layer to build on top of the reference pipeline for the Archify use case.
 
 The goal is not full architecture generation yet. The goal is to create a stronger intermediate representation that is much closer to architecture than raw `graph.json`, so an agent or later renderer can produce architecture docs, diagrams, and explanations with less guesswork.
 
 ## Why This Layer Exists
 
-Graphify already solves the first hard problem: understanding a codebase as a graph instead of as a pile of files.
+The reference pipeline already solves the first hard problem: understanding a codebase as a graph instead of as a pile of files.
 
 That gives us:
 
@@ -30,7 +30,7 @@ So the missing step is an architecture-context layer that converts graph structu
 
 ## Design Position
 
-This should be an additive layer on top of upstream Graphify, not a rewrite of the base graph pipeline.
+This should be an additive layer on top of the reference pipeline, not a rewrite of the base graph pipeline.
 
 Keep the existing baseline stable:
 
@@ -47,11 +47,11 @@ detect -> extract -> build -> cluster -> analyze -> architecture_context -> expo
 
 In practice, this means:
 
-- graphify still produces `graph.json`
+- the reference pipeline still produces `graph.json`
 - the new layer reads `graph.json` and analysis outputs
 - the new layer emits architecture-oriented artifacts
 
-This is the safest way to stay compatible with upstream graphify while getting closer to architecture generation.
+This is the safest way to stay compatible with the reference pipeline while getting closer to architecture generation.
 
 ## Inputs
 
@@ -302,11 +302,11 @@ That later generator should read `architecture-context.json` first, not raw file
 
 For our use case, this is the right move because:
 
-- Graphify already solves repo understanding
+- the reference pipeline already solves repo understanding
 - raw graph outputs are still too low-level for direct architecture generation
 - a subsystem-oriented intermediate representation reduces hallucination
 - architecture generation becomes more repeatable when it is grounded in evidence-backed context
-- it lets us keep upstream Graphify compatibility while adding our own higher-level reasoning layer
+- it lets us keep compatibility with the reference pipeline while adding our own higher-level reasoning layer
 
 ## V1 Boundaries
 
@@ -321,7 +321,7 @@ What v1 should not try to do:
 
 - produce perfect runtime architecture
 - infer every data flow with certainty
-- replace Graphify's base graph model
+- replace the base graph model from the reference pipeline
 - become a full architecture decision system
 
 ## Recommended Next Implementation Direction

@@ -101,7 +101,7 @@ Installs skills only for the current repository.
 Example:
 
 ```text
-.repo/.agent-skills/archify/
+.repo/.agents/skills/archify/
 ```
 
 Use Case:
@@ -118,7 +118,7 @@ Installs skills globally for all repositories.
 Example:
 
 ```text
-~/.agent-skills/archify/
+~/.agents/skills/archify/
 ```
 
 Use Case:

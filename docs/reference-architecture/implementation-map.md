@@ -1,18 +1,18 @@
 # Archify Build Map
 
-This document turns the Graphify reference notes plus the Archify architecture plan into an implementation map for this repository.
+This document turns the reference architecture notes plus the Archify architecture plan into an implementation map for this repository.
 
 Scope rule:
 
-- Build Archify in the repo root: `/Users/csuftitan/Desktop/Archify`
-- Use `graphify/` only as the behavioral and source reference
-- Do not implement inside `graphify/`
+- Build Archify in the repository root.
+- Use the reference implementation only as a behavioral and source reference.
+- Do not implement inside the upstream reference codebase.
 
 ---
 
 ## Product Goal
 
-Archify is not just a graph generator. It is an architecture-understanding system that uses a Graphify-style extraction pipeline to produce grounded architecture artifacts.
+Archify is not just a graph generator. It is an architecture-understanding system that uses a reference extraction pipeline to produce grounded architecture artifacts.
 
 Target flow:
 
@@ -50,7 +50,7 @@ Primary product references:
 
 ## Build Boundary
 
-### Keep Stable From Graphify
+### Keep Stable From The Reference Implementation
 
 These are the safest parts to mirror closely in v1:
 
@@ -65,13 +65,13 @@ Reference:
 
 - [Customization points](./customization-points.md)
 - [Pipeline overview](./pipeline-overview.md)
-- [Graphify architecture](../../graphify/ARCHITECTURE.md)
+- architecture notes from the reference implementation
 
 ### Archify-Specific Additions
 
-These are new layers on top of the Graphify-style baseline:
+These are new layers on top of the reference baseline:
 
-- `.archify/` output contract instead of `graphify-out/`
+- `.archify/` output contract instead of `reference-out/`
 - architecture-specific structured artifacts such as `modules.json` and `services.json`
 - architecture-context layer after graph analysis
 - agent skill workflow for Claude Code / Codex
@@ -113,8 +113,8 @@ Decisions for this phase:
 Reference:
 
 - [Archify plan](./archify_architecture_plan.md)
-- [Graphify CLI orchestration](../../graphify/graphify/__main__.py)
-- [Graphify package layout](../../graphify/ARCHITECTURE.md)
+- reference CLI orchestration
+- reference package layout
 
 Recommended output contract for v1:
 
@@ -146,7 +146,7 @@ Purpose:
 - discover the repository safely
 - classify files before extraction
 
-What to copy closely from Graphify:
+What to copy closely from the reference implementation:
 
 - extension-based classification
 - shebang detection for extensionless scripts
@@ -169,7 +169,7 @@ Reference:
 
 - [Code extraction notes: discovery and classification](./code-extraction.md)
 - [Pipeline overview: detect stage](./pipeline-overview.md)
-- [Graphify detect module](../../graphify/graphify/detect.py)
+- reference detect stage
 
 Acceptance criteria:
 
@@ -185,7 +185,7 @@ Purpose:
 
 - produce grounded graph fragments from source code without model calls
 
-What to copy closely from Graphify:
+What to copy closely from the reference implementation:
 
 - shared extraction schema: `nodes`, `edges`, optional `hyperedges`
 - stable IDs
@@ -197,7 +197,7 @@ Archify adaptation:
 
 - start with the languages needed for this repo scope
 - add architecture-relevant symbol categories where useful
-- preserve compatibility with a Graphify-style graph fragment contract
+- preserve compatibility with the reference graph fragment contract
 
 Outputs:
 
@@ -208,8 +208,8 @@ Reference:
 
 - [Code extraction](./code-extraction.md)
 - [Pipeline overview: extract stage](./pipeline-overview.md)
-- [Graphify extract module](../../graphify/graphify/extract.py)
-- [Graphify validation module](../../graphify/graphify/validate.py)
+- reference extract stage
+- reference validation boundary
 
 Acceptance criteria:
 
@@ -226,7 +226,7 @@ Purpose:
 
 - merge extraction fragments into one navigable repository graph
 
-What to copy closely from Graphify:
+What to copy closely from the reference implementation:
 
 - graph build as an explicit stage
 - normalization before merge
@@ -249,8 +249,8 @@ Reference:
 
 - [Graph assembly and analysis](./graph-assembly-and-analysis.md)
 - [Pipeline overview: build and cluster stages](./pipeline-overview.md)
-- [Graphify build module](../../graphify/graphify/build.py)
-- [Graphify cluster module](../../graphify/graphify/cluster.py)
+- reference build stage
+- reference cluster stage
 
 Acceptance criteria:
 
@@ -266,7 +266,7 @@ Purpose:
 
 - turn the graph into useful repository understanding before architecture synthesis
 
-What to copy closely from Graphify:
+What to copy closely from the reference implementation:
 
 - god-node analysis
 - surprising-connection ranking
@@ -287,8 +287,8 @@ Reference:
 
 - [Graph assembly and analysis](./graph-assembly-and-analysis.md)
 - [Pipeline overview: analyze and report stages](./pipeline-overview.md)
-- [Graphify analyze module](../../graphify/graphify/analyze.py)
-- [Graphify report module](../../graphify/graphify/report.py)
+- reference analyze stage
+- reference report stage
 
 Acceptance criteria:
 
@@ -342,7 +342,7 @@ Reference:
 
 - [Architecture context layer](./architecture-context-layer.md)
 - [Archify plan](./archify_architecture_plan.md)
-- [Graphify graph export contract](../../graphify/graphify/export.py)
+- reference graph export contract
 
 Acceptance criteria:
 
@@ -398,7 +398,7 @@ Purpose:
 
 - enrich the code graph with non-code context after the code-first baseline works
 
-What to copy closely from Graphify:
+What to copy closely from the reference implementation:
 
 - semantic extraction is a layer, not the foundation
 - conversion of complex formats into normalized text sidecars
@@ -420,7 +420,7 @@ Reference:
 
 - [Semantic extraction](./semantic-extraction.md)
 - [Pipeline overview](./pipeline-overview.md)
-- [Graphify how it works doc](../../graphify/docs/how-it-works.md)
+- how-it-works documentation from the reference implementation
 
 Acceptance criteria:
 
@@ -436,7 +436,7 @@ Purpose:
 
 - make Archify usable in active development without full rebuilds
 
-What to copy closely from Graphify:
+What to copy closely from the reference implementation:
 
 - code-only partial rebuilds
 - preserve semantic graph state when docs did not change
@@ -457,7 +457,7 @@ Reference:
 
 - [Incremental update and outputs](./incremental-update-and-outputs.md)
 - [Pipeline overview: update mode](./pipeline-overview.md)
-- [Graphify watch module](../../graphify/graphify/watch.py)
+- reference incremental update path
 
 Acceptance criteria:
 
@@ -491,8 +491,8 @@ Target outputs:
 Reference:
 
 - [Archify plan](./archify_architecture_plan.md)
-- [Graphify skill orchestration reference](../../graphify/graphify/skill-codex.md)
-- [Graphify skill orchestration reference](../../graphify/graphify/skill.md)
+- reference skill orchestration
+- shared skill reference
 
 Acceptance criteria:
 
@@ -520,9 +520,9 @@ Reference:
 
 - [Incremental update and outputs](./incremental-update-and-outputs.md)
 - [Customization points](./customization-points.md)
-- [Graphify export module](../../graphify/graphify/export.py)
-- [Graphify wiki module](../../graphify/graphify/wiki.py)
-- [Graphify callflow export](../../graphify/graphify/callflow_html.py)
+- reference export stage
+- reference wiki layer
+- reference callflow export
 
 ---
 
@@ -550,7 +550,7 @@ Reason for this order:
 
 ---
 
-## What Comes From Graphify Vs Archify
+## What Comes From The Reference System Vs Archify
 
 ### Copy Closely
 
@@ -564,19 +564,19 @@ Reason for this order:
 
 Primary references:
 
-- [Graphify architecture](../../graphify/ARCHITECTURE.md)
-- [Graphify detect](../../graphify/graphify/detect.py)
-- [Graphify extract](../../graphify/graphify/extract.py)
-- [Graphify build](../../graphify/graphify/build.py)
-- [Graphify cluster](../../graphify/graphify/cluster.py)
-- [Graphify analyze](../../graphify/graphify/analyze.py)
-- [Graphify report](../../graphify/graphify/report.py)
-- [Graphify export](../../graphify/graphify/export.py)
-- [Graphify watch](../../graphify/graphify/watch.py)
+- reference architecture
+- reference detect stage
+- reference extract stage
+- reference build stage
+- reference cluster stage
+- reference analyze stage
+- reference report stage
+- reference export stage
+- reference update path
 
 ### Adapt For Archify
 
-- output directory from `graphify-out/` to `.archify/`
+- output directory from `reference-out/` to `.archify/`
 - report shape toward architecture use
 - supported file policy based on architecture needs
 - ontology tuned for modules, interfaces, routes, services, data flows
@@ -629,40 +629,40 @@ V1 does not require:
 
 Core planning docs in this repo:
 
-- [docs/reference-architecture/README.md](./README.md)
-- [docs/reference-architecture/archify_architecture_plan.md](./archify_architecture_plan.md)
-- [docs/reference-architecture/pipeline-overview.md](./pipeline-overview.md)
-- [docs/reference-architecture/code-extraction.md](./code-extraction.md)
-- [docs/reference-architecture/graph-assembly-and-analysis.md](./graph-assembly-and-analysis.md)
-- [docs/reference-architecture/architecture-context-layer.md](./architecture-context-layer.md)
-- [docs/reference-architecture/incremental-update-and-outputs.md](./incremental-update-and-outputs.md)
-- [docs/reference-architecture/semantic-extraction.md](./semantic-extraction.md)
-- [docs/reference-architecture/customization-points.md](./customization-points.md)
+- [README.md](./README.md)
+- [archify_architecture_plan.md](./archify_architecture_plan.md)
+- [pipeline-overview.md](./pipeline-overview.md)
+- [code-extraction.md](./code-extraction.md)
+- [graph-assembly-and-analysis.md](./graph-assembly-and-analysis.md)
+- [architecture-context-layer.md](./architecture-context-layer.md)
+- [incremental-update-and-outputs.md](./incremental-update-and-outputs.md)
+- [semantic-extraction.md](./semantic-extraction.md)
+- [customization-points.md](./customization-points.md)
 
-Primary Graphify reference docs:
+Primary reference docs:
 
-- [graphify/ARCHITECTURE.md](../../graphify/ARCHITECTURE.md)
-- [graphify/README.md](../../graphify/README.md)
-- [graphify/docs/how-it-works.md](../../graphify/docs/how-it-works.md)
+- architecture documentation
+- project README
+- how-it-works documentation
 
-Primary Graphify reference modules:
+Primary reference modules:
 
-- [graphify/graphify/__main__.py](../../graphify/graphify/__main__.py)
-- [graphify/graphify/detect.py](../../graphify/graphify/detect.py)
-- [graphify/graphify/extract.py](../../graphify/graphify/extract.py)
-- [graphify/graphify/validate.py](../../graphify/graphify/validate.py)
-- [graphify/graphify/build.py](../../graphify/graphify/build.py)
-- [graphify/graphify/cluster.py](../../graphify/graphify/cluster.py)
-- [graphify/graphify/analyze.py](../../graphify/graphify/analyze.py)
-- [graphify/graphify/report.py](../../graphify/graphify/report.py)
-- [graphify/graphify/export.py](../../graphify/graphify/export.py)
-- [graphify/graphify/wiki.py](../../graphify/graphify/wiki.py)
-- [graphify/graphify/watch.py](../../graphify/graphify/watch.py)
-- [graphify/graphify/callflow_html.py](../../graphify/graphify/callflow_html.py)
+- CLI orchestration
+- detect
+- extract
+- validate
+- build
+- cluster
+- analyze
+- report
+- export
+- wiki
+- update
+- callflow export
 
 Behavioral test references:
 
-- [graphify/tests/test_pipeline.py](../../graphify/tests/test_pipeline.py)
-- [graphify/tests/test_incremental.py](../../graphify/tests/test_incremental.py)
-- [graphify/tests/test_watch.py](../../graphify/tests/test_watch.py)
-- [graphify/tests/test_wiki.py](../../graphify/tests/test_wiki.py)
+- pipeline tests
+- incremental tests
+- update-path tests
+- wiki tests

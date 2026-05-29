@@ -4,7 +4,7 @@ This is the part to follow for feature parity, but it should remain a layer on t
 
 ## What It Covers
 
-Per [docs/how-it-works.md](/Users/csuftitan/Desktop/graphify/docs/how-it-works.md), graphify extends beyond code into:
+In the reference implementation, the pipeline extends beyond code into:
 
 - markdown and text docs
 - PDFs and papers
@@ -16,7 +16,7 @@ All of those still end up in the same graph schema.
 
 ## Pipeline Position
 
-Semantic extraction runs after a usable code graph already exists. That ordering matters because graphify uses graph structure from the code pass to improve later stages, including transcript prompting.
+Semantic extraction runs after a usable code graph already exists. That ordering matters because the reference pipeline uses graph structure from the code pass to improve later stages, including transcript prompting.
 
 For an Archify adaptation, keep this sequencing:
 

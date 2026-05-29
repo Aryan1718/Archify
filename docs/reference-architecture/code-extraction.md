@@ -4,7 +4,7 @@ This is the base system to copy first. It is local, deterministic, and does not 
 
 ## Discovery And Classification
 
-[`graphify/detect.py`](/Users/csuftitan/Desktop/graphify/graphify/detect.py) is responsible for deciding what enters the graph.
+The detect stage is responsible for deciding what enters the graph.
 
 Key behaviors to preserve:
 
@@ -20,7 +20,7 @@ Implementation note for an Archify adaptation:
 
 ## AST Extractor Shape
 
-[`graphify/extract.py`](/Users/csuftitan/Desktop/graphify/graphify/extract.py) dispatches by language and emits a shared extraction format:
+The extract stage dispatches by language and emits a shared extraction format:
 
 ```json
 {
@@ -59,7 +59,7 @@ The adaptation should preserve the idea behind `_make_id()`:
 
 ## Language-Specific Rules
 
-Graphify uses a generic extractor framework plus per-language configuration. Archify does not need to copy every supported language immediately, but it should preserve the architecture:
+The reference implementation uses a generic extractor framework plus per-language configuration. Archify does not need to copy every supported language immediately, but it should preserve the architecture:
 
 - A language config object.
 - Shared AST walking logic.
@@ -84,7 +84,7 @@ The adaptation should keep confidence on the edge itself, not as a separate repo
 
 ## Validation Boundary
 
-The architecture docs point to `graphify/validate.py` as the schema guard before graph construction. Archify should keep this boundary:
+The reference architecture keeps a validation boundary before graph construction. Archify should keep this boundary:
 
 - Extractors may vary.
 - Graph construction should assume validated payloads.

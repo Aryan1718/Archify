@@ -4,7 +4,7 @@ This layer is what turns independent extraction fragments into a navigable knowl
 
 ## Build Phase
 
-[`graphify/build.py`](/Users/csuftitan/Desktop/graphify/graphify/build.py) does more than add nodes and edges.
+The build stage does more than add nodes and edges.
 
 Key behaviors to preserve:
 
@@ -16,7 +16,7 @@ Key behaviors to preserve:
 
 ## Deduplication
 
-The graph may receive overlapping entities from different extraction passes. Graphify handles this in layers:
+The graph may receive overlapping entities from different extraction passes. The reference implementation handles this in layers:
 
 - per-file extractor-level ID dedup
 - graph-level node overwrite behavior on matching IDs
@@ -26,7 +26,7 @@ For an Archify adaptation, keep dedup as an explicit subsystem. Do not bury it i
 
 ## Community Detection
 
-[`graphify/cluster.py`](/Users/csuftitan/Desktop/graphify/graphify/cluster.py) is the reference.
+The cluster stage is the reference point here.
 
 Key behaviors:
 
@@ -41,11 +41,11 @@ The adaptation should preserve community IDs as output metadata, not as hard-cod
 
 ## Analysis Outputs
 
-[`graphify/analyze.py`](/Users/csuftitan/Desktop/graphify/graphify/analyze.py) computes the summary features users actually consume.
+The analyze stage computes the summary features users actually consume.
 
 ### God Nodes
 
-These are the highest-degree non-noise entities. Graphify explicitly filters out:
+These are the highest-degree non-noise entities. The reference implementation explicitly filters out:
 
 - file hub nodes
 - concept-only nodes
@@ -55,7 +55,7 @@ Archify should keep this idea of excluding structural noise before ranking impor
 
 ### Surprising Connections
 
-Graphify ranks non-obvious edges using:
+The reference implementation ranks non-obvious edges using:
 
 - confidence level
 - cross-file or cross-community distance

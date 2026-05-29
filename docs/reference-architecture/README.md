@@ -1,6 +1,6 @@
-# Graphify Reference Notes
+# Reference Architecture Notes
 
-This folder documents how `graphify` builds a repository-wide knowledge graph so the same base system can be studied and adapted for Archify without guessing at the architecture.
+This folder documents how the reference implementation builds a repository-wide knowledge graph so the same base system can be studied and adapted for Archify without guessing at the architecture.
 
 The reference implementation in this repo splits into a deterministic local pipeline for code and an optional semantic pipeline for non-code content. The safest implementation order is:
 
@@ -10,18 +10,18 @@ The reference implementation in this repo splits into a deterministic local pipe
 4. Add semantic extraction for docs and media.
 5. Add wiki/global graph features only if needed.
 
-Use these notes with the source modules:
+Use these notes with the reference implementation stages:
 
-- `graphify/detect.py`
-- `graphify/extract.py`
-- `graphify/build.py`
-- `graphify/cluster.py`
-- `graphify/analyze.py`
-- `graphify/report.py`
-- `graphify/export.py`
-- `graphify/wiki.py`
-- `graphify/watch.py`
-- `graphify/__main__.py`
+- detect
+- extract
+- build
+- cluster
+- analyze
+- report
+- export
+- wiki
+- update
+- CLI orchestration
 
 Recommended reading order in this folder:
 
@@ -35,10 +35,10 @@ Recommended reading order in this folder:
 
 Behavioral reference tests:
 
-- `tests/test_pipeline.py`
-- `tests/test_incremental.py`
-- `tests/test_watch.py`
-- `tests/test_wiki.py`
+- pipeline tests
+- incremental tests
+- update-path tests
+- wiki tests
 
 Minimum baseline the reference implementation should preserve:
 
@@ -51,4 +51,4 @@ Minimum baseline the reference implementation should preserve:
 
 Extension note:
 
-- [architecture-context-layer.md](./architecture-context-layer.md) describes the proposed intermediate layer that sits on top of `graph.json` and moves the system closer to software-architecture generation without changing the upstream Graphify outputs.
+- [architecture-context-layer.md](./architecture-context-layer.md) describes the proposed intermediate layer that sits on top of `graph.json` and moves the system closer to software-architecture generation without changing the reference outputs.
