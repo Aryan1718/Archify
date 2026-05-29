@@ -13,7 +13,7 @@ Key behaviors to preserve:
 - Silent skipping of likely secret-bearing files.
 - Optional classification of markdown/text as `paper` when the content matches academic-paper heuristics.
 
-Implementation note for a clone:
+Implementation note for an Archify adaptation:
 
 - Keep file classification separate from extraction.
 - Make ignore rules and supported extensions configurable instead of scattering them across extractors.
@@ -49,7 +49,7 @@ Required edge fields in practice:
 
 ## Stable Node IDs
 
-The clone should preserve the idea behind `_make_id()`:
+The adaptation should preserve the idea behind `_make_id()`:
 
 - IDs are normalized and stable.
 - IDs are derived from semantic names plus file context when needed.
@@ -59,7 +59,7 @@ The clone should preserve the idea behind `_make_id()`:
 
 ## Language-Specific Rules
 
-Graphify uses a generic extractor framework plus per-language configuration. The clone does not need to copy every supported language immediately, but it should preserve the architecture:
+Graphify uses a generic extractor framework plus per-language configuration. Archify does not need to copy every supported language immediately, but it should preserve the architecture:
 
 - A language config object.
 - Shared AST walking logic.
@@ -80,11 +80,11 @@ The local extractor emits:
 - `INFERRED` for second-pass or resolver-based edges.
 - `AMBIGUOUS` when a target cannot be resolved confidently.
 
-The clone should keep confidence on the edge itself, not as a separate report-only concept.
+The adaptation should keep confidence on the edge itself, not as a separate report-only concept.
 
 ## Validation Boundary
 
-The architecture docs point to `graphify/validate.py` as the schema guard before graph construction. A clone should keep this boundary:
+The architecture docs point to `graphify/validate.py` as the schema guard before graph construction. Archify should keep this boundary:
 
 - Extractors may vary.
 - Graph construction should assume validated payloads.
@@ -92,7 +92,7 @@ The architecture docs point to `graphify/validate.py` as the schema guard before
 
 ## Baseline Acceptance Criteria
 
-The code-first clone is acceptable when it can:
+The code-first adaptation is acceptable when it can:
 
 - Scan a repository and classify supported code files.
 - Parse them into nodes and edges with stable IDs.

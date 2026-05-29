@@ -22,7 +22,7 @@ The graph may receive overlapping entities from different extraction passes. Gra
 - graph-level node overwrite behavior on matching IDs
 - optional semantic entity deduplication
 
-For a clone, keep dedup as an explicit subsystem. Do not bury it inside extractors.
+For an Archify adaptation, keep dedup as an explicit subsystem. Do not bury it inside extractors.
 
 ## Community Detection
 
@@ -37,7 +37,7 @@ Key behaviors:
 - Re-split low-cohesion communities that are held together by broad hub nodes.
 - Reindex communities by size for stable output ordering.
 
-The clone should preserve community IDs as output metadata, not as hard-coded node properties created by extractors.
+The adaptation should preserve community IDs as output metadata, not as hard-coded node properties created by extractors.
 
 ## Analysis Outputs
 
@@ -51,7 +51,7 @@ These are the highest-degree non-noise entities. Graphify explicitly filters out
 - concept-only nodes
 - low-signal function/method stubs
 
-A clone should keep this idea of excluding structural noise before ranking important nodes.
+Archify should keep this idea of excluding structural noise before ranking important nodes.
 
 ### Surprising Connections
 
@@ -71,7 +71,7 @@ Suggested questions are derived from actual graph structure so the report points
 
 ## Report Contract
 
-`GRAPH_REPORT.md` is not decorative. It is the navigation layer for users and agents. The clone should preserve that role:
+`GRAPH_REPORT.md` is not decorative. It is the navigation layer for users and agents. Archify should preserve that role:
 
 - summarize graph size and extraction mix
 - list god nodes

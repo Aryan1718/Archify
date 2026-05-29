@@ -1,6 +1,6 @@
 # Archify Build Map
 
-This document turns the Graphify clone notes plus the Archify architecture plan into an implementation map for this repository.
+This document turns the Graphify reference notes plus the Archify architecture plan into an implementation map for this repository.
 
 Scope rule:
 
@@ -38,7 +38,7 @@ Primary product outputs:
 - `.archify/architecture-context.md`
 - `.archify/design-packet.json`
 - `.archify/design-brief.md`
-- generated `archify_design.md`
+- generated `archify.md`
 - optional Mermaid diagrams
 
 Primary product references:
@@ -479,13 +479,13 @@ What this phase includes:
 - project-level and global-level skill installation
 - skill invocation pattern for Claude Code and Codex
 - permissioned CLI execution from the skill
-- final `archify_design.md` generation from `.archify/` artifacts
+- final `archify.md` generation from `.archify/` artifacts
 
 Target outputs:
 
 - `.archify/design-packet.json`
 - `.archify/design-brief.md`
-- `archify_design.md`
+- `archify.md`
 - optional Mermaid diagrams
 
 Reference:
@@ -544,7 +544,7 @@ Build in this order:
 
 Reason for this order:
 
-- Archify’s core value is grounded architecture generation from code first
+- Archify's core value is grounded architecture generation from code first
 - semantic extraction improves quality, but should not block a useful v1
 - the architecture-context layer is the first major Archify-specific differentiator
 
@@ -613,7 +613,7 @@ Archify v1 should be considered complete when it can:
 - emit architecture-oriented structured artifacts in `.archify/`
 - separate confirmed facts from inferred claims
 - regenerate incrementally for code-only changes
-- support an agent workflow that produces grounded `archify_design.md`
+- support an agent workflow that produces grounded `archify.md`
 
 V1 does not require:
 
@@ -629,15 +629,15 @@ V1 does not require:
 
 Core planning docs in this repo:
 
-- [docs/graphify-clone/README.md](./README.md)
-- [docs/graphify-clone/archify_architecture_plan.md](./archify_architecture_plan.md)
-- [docs/graphify-clone/pipeline-overview.md](./pipeline-overview.md)
-- [docs/graphify-clone/code-extraction.md](./code-extraction.md)
-- [docs/graphify-clone/graph-assembly-and-analysis.md](./graph-assembly-and-analysis.md)
-- [docs/graphify-clone/architecture-context-layer.md](./architecture-context-layer.md)
-- [docs/graphify-clone/incremental-update-and-outputs.md](./incremental-update-and-outputs.md)
-- [docs/graphify-clone/semantic-extraction.md](./semantic-extraction.md)
-- [docs/graphify-clone/customization-points.md](./customization-points.md)
+- [docs/reference-architecture/README.md](./README.md)
+- [docs/reference-architecture/archify_architecture_plan.md](./archify_architecture_plan.md)
+- [docs/reference-architecture/pipeline-overview.md](./pipeline-overview.md)
+- [docs/reference-architecture/code-extraction.md](./code-extraction.md)
+- [docs/reference-architecture/graph-assembly-and-analysis.md](./graph-assembly-and-analysis.md)
+- [docs/reference-architecture/architecture-context-layer.md](./architecture-context-layer.md)
+- [docs/reference-architecture/incremental-update-and-outputs.md](./incremental-update-and-outputs.md)
+- [docs/reference-architecture/semantic-extraction.md](./semantic-extraction.md)
+- [docs/reference-architecture/customization-points.md](./customization-points.md)
 
 Primary Graphify reference docs:
 

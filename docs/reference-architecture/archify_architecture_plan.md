@@ -14,7 +14,7 @@ The system combines:
 
 The goal is to allow users to invoke a simple skill inside coding agents like Claude Code or Codex and automatically generate:
 
-- `archify_design.md`
+- `archify.md`
 - internal grounded design packets in `.archify/`
 - prompt-ready design briefs for external model use
 - Optional Mermaid diagrams
@@ -69,7 +69,7 @@ Archify builds knowledge graph + architecture context
         ↓
 Agent reads generated context
         ↓
-Agent generates `archify_design.md`
+Agent generates `archify.md`
 ```
 
 ---
@@ -143,7 +143,7 @@ The skill should then:
 1. Ask permission to run Archify CLI
 2. Run repository analysis
 3. Wait for generated architecture context
-4. Generate `archify_design.md`
+4. Generate `archify.md`
 
 ---
 
@@ -290,7 +290,7 @@ The system should NEVER present assumptions as facts.
 
 # Generated Outputs
 
-## archify_design.md
+## archify.md
 
 Prompt-ready design brief that the user can paste directly into ChatGPT or Gemini for diagram generation.
 

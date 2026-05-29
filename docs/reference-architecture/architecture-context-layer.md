@@ -1,6 +1,6 @@
 # Architecture Context Layer
 
-This note describes the next layer to build on top of graphify for our use case.
+This note describes the next layer to build on top of Graphify for the Archify use case.
 
 The goal is not full architecture generation yet. The goal is to create a stronger intermediate representation that is much closer to architecture than raw `graph.json`, so an agent or later renderer can produce architecture docs, diagrams, and explanations with less guesswork.
 
@@ -30,7 +30,7 @@ So the missing step is an architecture-context layer that converts graph structu
 
 ## Design Position
 
-This should be an additive layer on top of stock graphify, not a rewrite of the base graph pipeline.
+This should be an additive layer on top of upstream Graphify, not a rewrite of the base graph pipeline.
 
 Keep the existing baseline stable:
 
@@ -80,8 +80,8 @@ V1 should emit both a machine-readable and a human-readable artifact.
 
 Suggested outputs:
 
-- `graphify-out/architecture-context.json`
-- `graphify-out/ARCHITECTURE_CONTEXT.md`
+- `.archify/architecture-context.json`
+- `.archify/architecture-context.md`
 
 ### Purpose Of `architecture-context.json`
 
@@ -94,7 +94,7 @@ It should be optimized for:
 - stable references into the underlying graph
 - low need to re-read raw source files
 
-### Purpose Of `ARCHITECTURE_CONTEXT.md`
+### Purpose Of `architecture-context.md`
 
 This is the human-readable companion.
 
@@ -302,11 +302,11 @@ That later generator should read `architecture-context.json` first, not raw file
 
 For our use case, this is the right move because:
 
-- graphify already solves repo understanding
+- Graphify already solves repo understanding
 - raw graph outputs are still too low-level for direct architecture generation
 - a subsystem-oriented intermediate representation reduces hallucination
 - architecture generation becomes more repeatable when it is grounded in evidence-backed context
-- it lets us keep upstream graphify compatibility while adding our own higher-level reasoning layer
+- it lets us keep upstream Graphify compatibility while adding our own higher-level reasoning layer
 
 ## V1 Boundaries
 
@@ -321,7 +321,7 @@ What v1 should not try to do:
 
 - produce perfect runtime architecture
 - infer every data flow with certainty
-- replace graphify’s base graph model
+- replace Graphify's base graph model
 - become a full architecture decision system
 
 ## Recommended Next Implementation Direction
@@ -331,5 +331,5 @@ When this is implemented later, the safest path is:
 1. Keep `graph.json` untouched.
 2. Build a post-processing module that reads the graph and analysis outputs.
 3. Emit `architecture-context.json`.
-4. Render `ARCHITECTURE_CONTEXT.md` from that JSON.
+4. Render `architecture-context.md` from that JSON.
 5. Add architecture-specific exports only after the intermediate layer is stable.

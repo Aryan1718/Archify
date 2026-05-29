@@ -12,7 +12,7 @@ These parts should stay close to graphify unless there is a strong reason not to
 - incremental code-only update path
 - durable `graph.json` plus human-readable report
 
-Changing these early will make the clone harder to reason about and harder to validate against graphify behavior.
+Changing these early will make the adaptation harder to reason about and harder to validate against Graphify behavior.
 
 ## Best Places To Customize
 
@@ -105,5 +105,5 @@ Phase 4:
 - Which file types are in scope for v1.
 - Whether non-code semantic extraction is part of v1 or v2.
 - The exact node and relation vocabulary for your domain.
-- Whether the clone must remain compatible with graphify-style `graph.json`.
+- Whether Archify must remain compatible with Graphify-style `graph.json`.
 - Whether report consumers are humans only, agents only, or both.

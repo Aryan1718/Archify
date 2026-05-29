@@ -14,7 +14,7 @@ Key behaviors to preserve:
 - Re-run build, cluster, analyze, report, and export after the partial rebuild.
 - Avoid LLM work for code-only changes.
 
-This separation is one of the core graphify design wins. Your clone should keep it unless your use case truly cannot distinguish code-only from semantic changes.
+This separation is one of the core Graphify design wins. Archify should keep it unless the use case truly cannot distinguish code-only from semantic changes.
 
 ## Locking And Safety
 
@@ -42,7 +42,7 @@ Optional outputs:
 
 ## `graph.json` Requirements
 
-The clone should preserve these properties of the exported graph:
+The Archify adaptation should preserve these properties of the exported graph:
 
 - node-link JSON shape
 - per-node community annotation
@@ -58,11 +58,11 @@ The clone should preserve these properties of the exported graph:
 - one article per community
 - one article per god node
 
-This should remain optional in the clone. It is a consumer of the graph, not a prerequisite for building it.
+This should remain optional in Archify. It is a consumer of the graph, not a prerequisite for building it.
 
 ## Behavioral Tests To Mirror
 
-The clone should reproduce the intent of:
+The Archify adaptation should reproduce the intent of:
 
 - [tests/test_pipeline.py](/Users/csuftitan/Desktop/graphify/tests/test_pipeline.py)
 - [tests/test_incremental.py](/Users/csuftitan/Desktop/graphify/tests/test_incremental.py)
