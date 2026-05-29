@@ -55,9 +55,10 @@ Codex workflow:
 15. After \`generate\`, run \`npx archify status\` again and only continue if the design packet is ready and not stale.
 16. If status already says the knowledge and design packet are fresh, reuse them and do not rerun \`analyze\` or \`generate\`.
 17. Read \`.archify/design-packet.json\` first.
-18. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
-19. After \`generate\` or reuse, reconcile the README/context pass summary with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet. Resolve conflicts in favor of grounded \`.archify\` evidence.
-20. Write one root-level file: \`archify.md\`.
+18. Read \`.archify/archify.guide.json\` second and follow its read order, section plan, fact policy, and validation checks before inspecting anything else.
+19. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
+20. After \`generate\` or reuse, reconcile the README/context pass summary with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet. Resolve conflicts in favor of grounded \`.archify\` evidence.
+21. Write one root-level file: \`archify.md\`.
 
 Claude Code workflow:
 1. Start by confirming that this skill will handle the full Archify flow itself instead of pushing command execution back to the user.
@@ -76,9 +77,10 @@ Claude Code workflow:
 14. After \`generate\`, run \`npx archify status\` again and only continue if the design packet is ready and not stale.
 15. If status already says the knowledge and design packet are fresh, reuse them and do not rerun \`analyze\` or \`generate\`.
 16. Read \`.archify/design-packet.json\` first.
-17. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
-18. Reconcile the earlier supporting-doc context with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet after \`generate\` or reuse.
-19. Write one root-level file: \`archify.md\`.
+17. Read \`.archify/archify.guide.json\` second and follow its read order, section plan, fact policy, and validation checks before inspecting anything else.
+18. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
+19. Reconcile the earlier supporting-doc context with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet after \`generate\` or reuse.
+20. Write one root-level file: \`archify.md\`.
 
 Generic fallback workflow:
 1. Start by confirming that this skill will handle the full Archify flow itself instead of pushing command execution back to the user.
@@ -97,12 +99,14 @@ Generic fallback workflow:
 14. After \`generate\`, run \`npx archify status\` again and only continue if the design packet is ready and not stale.
 15. If status already says the knowledge and design packet are fresh, reuse them and do not rerun \`analyze\` or \`generate\`.
 16. Read \`.archify/design-packet.json\` first.
-17. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
-18. Reconcile any README or supporting-document context gathered in parallel after \`generate\` or reuse, while keeping grounded \`.archify\` evidence as the source of confirmed facts.
-19. Write one root-level file: \`archify.md\`.
+17. Read \`.archify/archify.guide.json\` second and follow its read order, section plan, fact policy, and validation checks before inspecting anything else.
+18. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
+19. Reconcile any README or supporting-document context gathered in parallel after \`generate\` or reuse, while keeping grounded \`.archify\` evidence as the source of confirmed facts.
+20. Write one root-level file: \`archify.md\`.
 
 Writing rules:
 - Always start from \`.archify/design-packet.json\`.
+- Always read \`.archify/archify.guide.json\` immediately after the design packet and follow it as the control artifact for \`archify.md\`.
 - Make \`archify.md\` an upload-ready architecture prompt artifact for AI apps such as ChatGPT or Claude.
 - Include explicit \`System Prompt\`, \`User Prompt\`, \`Grounded Repository Context\`, \`Questions Before Architecture Generation\`, and \`Diagram / Image Generation Instructions\` sections.
 - Keep \`Confirmed From Codebase\`, \`Inferred Architecture\`, README-only or supporting claims, and \`Open Questions / Uncertainty\` separate.
@@ -164,12 +168,14 @@ Workflow:
 14. After \`generate\`, run \`npx archify status\` again and only continue if the design packet is ready and not stale.
 15. If status already says the knowledge and design packet are fresh, reuse them and do not rerun \`analyze\` or \`generate\`.
 16. Read \`.archify/design-packet.json\` first.
-17. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
-18. Reconcile the earlier supporting-doc context with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet after \`generate\` or reuse.
-19. Write one root-level file: \`archify.md\`.
+17. Read \`.archify/archify.guide.json\` second and follow its read order, section plan, fact policy, and validation checks before inspecting anything else.
+18. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
+19. Reconcile the earlier supporting-doc context with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet after \`generate\` or reuse.
+20. Write one root-level file: \`archify.md\`.
 
 Writing rules:
 - Always start from \`.archify/design-packet.json\`.
+- Always read \`.archify/archify.guide.json\` immediately after the design packet and follow it as the control artifact for \`archify.md\`.
 - Make \`archify.md\` an upload-ready architecture prompt artifact for AI apps such as ChatGPT or Claude.
 - Include explicit \`System Prompt\`, \`User Prompt\`, \`Grounded Repository Context\`, \`Questions Before Architecture Generation\`, and \`Diagram / Image Generation Instructions\` sections.
 - Keep \`Confirmed From Codebase\`, \`Inferred Architecture\`, README-only or supporting claims, and \`Open Questions / Uncertainty\` separate.
@@ -181,7 +187,7 @@ Writing rules:
 - Treat README or other docs as supporting context only.
 - Use the root README as supporting context when present, and skip it cleanly when it is absent.
 - When analysis is needed and the agent supports parallel work, gather the README and a small set of similar top-level docs in parallel with \`analyze\`.
-- Use additional supporting docs only as optional context, not as a replacement for \`.archify/design-packet.json\` and the referenced artifacts.
+- Use additional supporting docs only as optional context, not as a replacement for \`.archify/design-packet.json\`, \`.archify/archify.guide.json\`, and the referenced artifacts.
 - Always check \`npx archify status\` before deciding whether to initialize, analyze, generate, or reuse existing artifacts.
 - If setup is missing, initialize. If knowledge is missing or stale, analyze. If the design packet is missing or stale, generate. If everything is fresh, reuse it.
 - If \`archify.config.json\` is missing, initialize the current project automatically before analysis instead of asking the user to run \`archify init\` manually.
@@ -231,12 +237,14 @@ Workflow:
 15. After \`generate\`, run \`npx archify status\` again and only continue if the design packet is ready and not stale.
 16. If status already says the knowledge and design packet are fresh, reuse them and do not rerun \`analyze\` or \`generate\`.
 17. Read \`.archify/design-packet.json\` first.
-18. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
-19. After \`generate\` or reuse, reconcile the README/context pass summary with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet. Resolve conflicts in favor of grounded \`.archify\` evidence.
-20. Write one root-level file: \`archify.md\`.
+18. Read \`.archify/archify.guide.json\` second and follow its read order, section plan, fact policy, and validation checks before inspecting anything else.
+19. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
+20. After \`generate\` or reuse, reconcile the README/context pass summary with \`supportingDocuments.primaryReadme\` and any \`supportingDocuments.additionalDocs\` listed in the design packet. Resolve conflicts in favor of grounded \`.archify\` evidence.
+21. Write one root-level file: \`archify.md\`.
 
 Writing rules:
 - Always start from \`.archify/design-packet.json\`.
+- Always read \`.archify/archify.guide.json\` immediately after the design packet and follow it as the control artifact for \`archify.md\`.
 - Make \`archify.md\` an upload-ready architecture prompt artifact for AI apps such as ChatGPT or Claude.
 - Include explicit \`System Prompt\`, \`User Prompt\`, \`Grounded Repository Context\`, \`Questions Before Architecture Generation\`, and \`Diagram / Image Generation Instructions\` sections.
 - Keep \`Confirmed From Codebase\`, \`Inferred Architecture\`, README-only or supporting claims, and \`Open Questions / Uncertainty\` separate.
@@ -248,7 +256,7 @@ Writing rules:
 - Treat README or other docs as supporting context only.
 - Use the README/context pass output only as supporting context and never as a replacement for grounded evidence.
 - When analysis is needed and the agent supports parallel work, gather the README and a small set of similar top-level docs in parallel with \`analyze\`.
-- Use additional supporting docs only as optional context, not as a replacement for \`.archify/design-packet.json\` and the referenced artifacts.
+- Use additional supporting docs only as optional context, not as a replacement for \`.archify/design-packet.json\`, \`.archify/archify.guide.json\`, and the referenced artifacts.
 - Always check \`npx archify status\` before deciding whether to initialize, analyze, generate, or reuse existing artifacts.
 - If setup is missing, initialize. If knowledge is missing or stale, analyze. If the design packet is missing or stale, generate. If everything is fresh, reuse it.
 - If \`archify.config.json\` is missing, initialize the current project automatically before analysis instead of asking the user to run \`archify init\` manually.

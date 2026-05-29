@@ -51,7 +51,9 @@ export const OPERATIONAL_ARTIFACTS = [
 
 export const SYNTHESIS_ARTIFACTS = [
   "design-packet.json",
-  "design-brief.md"
+  "design-brief.md",
+  "archify.guide.json",
+  "archify.guide.md"
 ];
 
 export const ALL_ANALYSIS_ARTIFACTS = [
