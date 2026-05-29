@@ -107,6 +107,7 @@ Generic fallback workflow:
 Writing rules:
 - Always start from \`.archify/design-packet.json\`.
 - Always read \`.archify/archify.guide.json\` immediately after the design packet and follow it as the control artifact for \`archify.md\`.
+- Draft \`archify.md\` section by section using the guide's \`sectionPlan\`, then validate each section before finalizing the document.
 - Make \`archify.md\` an upload-ready architecture prompt artifact for AI apps such as ChatGPT or Claude.
 - Include explicit \`System Prompt\`, \`User Prompt\`, \`Grounded Repository Context\`, \`Questions Before Architecture Generation\`, and \`Diagram / Image Generation Instructions\` sections.
 - Keep \`Confirmed From Codebase\`, \`Inferred Architecture\`, README-only or supporting claims, and \`Open Questions / Uncertainty\` separate.
@@ -176,6 +177,7 @@ Workflow:
 Writing rules:
 - Always start from \`.archify/design-packet.json\`.
 - Always read \`.archify/archify.guide.json\` immediately after the design packet and follow it as the control artifact for \`archify.md\`.
+- Draft \`archify.md\` section by section using the guide's \`sectionPlan\`, then validate each section before finalizing the document.
 - Make \`archify.md\` an upload-ready architecture prompt artifact for AI apps such as ChatGPT or Claude.
 - Include explicit \`System Prompt\`, \`User Prompt\`, \`Grounded Repository Context\`, \`Questions Before Architecture Generation\`, and \`Diagram / Image Generation Instructions\` sections.
 - Keep \`Confirmed From Codebase\`, \`Inferred Architecture\`, README-only or supporting claims, and \`Open Questions / Uncertainty\` separate.
@@ -245,6 +247,7 @@ Workflow:
 Writing rules:
 - Always start from \`.archify/design-packet.json\`.
 - Always read \`.archify/archify.guide.json\` immediately after the design packet and follow it as the control artifact for \`archify.md\`.
+- Draft \`archify.md\` section by section using the guide's \`sectionPlan\`, then validate each section before finalizing the document.
 - Make \`archify.md\` an upload-ready architecture prompt artifact for AI apps such as ChatGPT or Claude.
 - Include explicit \`System Prompt\`, \`User Prompt\`, \`Grounded Repository Context\`, \`Questions Before Architecture Generation\`, and \`Diagram / Image Generation Instructions\` sections.
 - Keep \`Confirmed From Codebase\`, \`Inferred Architecture\`, README-only or supporting claims, and \`Open Questions / Uncertainty\` separate.

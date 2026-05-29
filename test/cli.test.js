@@ -105,6 +105,7 @@ test("bare archify runs setup for the current project and installs both Codex an
   assert.match(codexSkill, /Always start from `\.archify\/design-packet\.json`/i);
   assert.match(codexSkill, /Read `\.archify\/archify\.guide\.json` second/i);
   assert.match(codexSkill, /Always read `\.archify\/archify\.guide\.json` immediately after the design packet/i);
+  assert.match(codexSkill, /Draft `archify\.md` section by section using the guide's `sectionPlan`/i);
   assert.match(codexSkill, /upload-ready architecture prompt pack/i);
   assert.match(codexSkill, /Include explicit `System Prompt`, `User Prompt`, `Grounded Repository Context`, `Questions Before Architecture Generation`, and `Diagram \/ Image Generation Instructions` sections/i);
   assert.match(codexSkill, /Make the first response ask which architecture artifact the user wants/i);
@@ -130,6 +131,7 @@ test("bare archify runs setup for the current project and installs both Codex an
   assert.match(claudeSkill, /supportingDocuments\.primaryReadme/i);
   assert.match(claudeSkill, /Always start from `\.archify\/design-packet\.json`/i);
   assert.match(claudeSkill, /Read `\.archify\/archify\.guide\.json` second/i);
+  assert.match(claudeSkill, /Draft `archify\.md` section by section using the guide's `sectionPlan`/i);
   assert.match(claudeSkill, /upload-ready architecture prompt pack/i);
   assert.match(claudeSkill, /System Prompt/i);
   assert.match(claudeSkill, /User Prompt/i);
@@ -185,6 +187,7 @@ test("init supports shared global install mode and is idempotent", async () => {
   assert.match(sharedSkill, /Start by checking `npx archify status`/i);
   assert.match(sharedSkill, /If setup is missing, initialize\. If knowledge is missing or stale, analyze\. If the design packet is missing or stale, generate\. If everything is fresh, reuse it\./i);
   assert.match(sharedSkill, /Read `\.archify\/archify\.guide\.json` second/i);
+  assert.match(sharedSkill, /Draft `archify\.md` section by section using the guide's `sectionPlan`/i);
   assert.match(sharedSkill, /start one bounded README\/context pass in parallel with the analysis step/i);
   assert.match(sharedSkill, /Do not block on the README\/context pass before `analyze` finishes/i);
   assert.match(sharedSkill, /read the root `README\.md` when present plus a small set of similar top-level docs/i);
@@ -452,8 +455,19 @@ test("generate writes an internal design packet from grounded .archify artifacts
   assert.ok(guide.primaryArtifacts.includes(".archify/architecture-context.json"));
   assert.ok(guide.sectionPlan.some((item) => item.section === "Grounded Repository Context"));
   assert.ok(guide.sectionPlan.some((item) => item.section === "Confirmed From Codebase"));
+  assert.ok(Array.isArray(guide.draftingWorkflow));
+  assert.ok(guide.draftingWorkflow.some((item) => /section by section/i.test(item)));
+  const groundedSection = guide.sectionPlan.find((item) => item.section === "Grounded Repository Context");
+  assert.ok(groundedSection);
+  assert.ok(groundedSection.sourceFields.includes("confirmedFromCodebase"));
+  assert.ok(Array.isArray(groundedSection.draftingInstructions));
+  assert.ok(groundedSection.draftingInstructions.length >= 1);
+  assert.match(groundedSection.missingEvidenceBehavior, /evidence/i);
+  assert.ok(Array.isArray(groundedSection.validationChecks));
+  assert.ok(groundedSection.validationChecks.length >= 1);
   assert.ok(guide.forbiddenBehaviors.some((item) => /Do not inspect the whole repository/i.test(item)));
   assert.ok(guide.validationChecks.some((item) => /Read `\.archify\/archify\.guide\.json` before reading repository files/i.test(item)));
+  assert.ok(guide.validationChecks.some((item) => /Draft and validate `archify\.md` section by section/i.test(item)));
   assert.match(brief, /Start from `\.archify\/design-packet\.json`/);
   assert.match(brief, /primary grounded source of confirmed facts/);
   assert.match(brief, /supportingDocuments\.primaryReadme/);
@@ -469,6 +483,9 @@ test("generate writes an internal design packet from grounded .archify artifacts
   assert.match(guideBrief, /# Archify Guide Brief/);
   assert.match(guideBrief, /Doc type: `archify`/);
   assert.match(guideBrief, /`\.archify\/archify\.guide\.json`/);
+  assert.match(guideBrief, /## Drafting Workflow/);
+  assert.match(guideBrief, /Field: `confirmedFromCodebase`/);
+  assert.match(guideBrief, /Missing evidence:/);
   assert.match(guideBrief, /Grounded Repository Context/);
   assert.match(guideBrief, /Do not inspect the whole repository/i);
   assert.ok(!(await fs.access(path.join(cwd, "architecture.md")).then(() => true).catch(() => false)));
