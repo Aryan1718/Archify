@@ -4,7 +4,7 @@ This layer is what turns independent extraction fragments into a navigable knowl
 
 ## Build Phase
 
-[`graphify/build.py`](/Users/csuftitan/Desktop/graphify/graphify/build.py) does more than add nodes and edges.
+The build stage does more than add nodes and edges.
 
 Key behaviors to preserve:
 
@@ -16,17 +16,17 @@ Key behaviors to preserve:
 
 ## Deduplication
 
-The graph may receive overlapping entities from different extraction passes. Graphify handles this in layers:
+The graph may receive overlapping entities from different extraction passes. The reference implementation handles this in layers:
 
 - per-file extractor-level ID dedup
 - graph-level node overwrite behavior on matching IDs
 - optional semantic entity deduplication
 
-For a clone, keep dedup as an explicit subsystem. Do not bury it inside extractors.
+For an Archify adaptation, keep dedup as an explicit subsystem. Do not bury it inside extractors.
 
 ## Community Detection
 
-[`graphify/cluster.py`](/Users/csuftitan/Desktop/graphify/graphify/cluster.py) is the reference.
+The cluster stage is the reference point here.
 
 Key behaviors:
 
@@ -37,25 +37,25 @@ Key behaviors:
 - Re-split low-cohesion communities that are held together by broad hub nodes.
 - Reindex communities by size for stable output ordering.
 
-The clone should preserve community IDs as output metadata, not as hard-coded node properties created by extractors.
+The adaptation should preserve community IDs as output metadata, not as hard-coded node properties created by extractors.
 
 ## Analysis Outputs
 
-[`graphify/analyze.py`](/Users/csuftitan/Desktop/graphify/graphify/analyze.py) computes the summary features users actually consume.
+The analyze stage computes the summary features users actually consume.
 
 ### God Nodes
 
-These are the highest-degree non-noise entities. Graphify explicitly filters out:
+These are the highest-degree non-noise entities. The reference implementation explicitly filters out:
 
 - file hub nodes
 - concept-only nodes
 - low-signal function/method stubs
 
-A clone should keep this idea of excluding structural noise before ranking important nodes.
+Archify should keep this idea of excluding structural noise before ranking important nodes.
 
 ### Surprising Connections
 
-Graphify ranks non-obvious edges using:
+The reference implementation ranks non-obvious edges using:
 
 - confidence level
 - cross-file or cross-community distance
@@ -71,7 +71,7 @@ Suggested questions are derived from actual graph structure so the report points
 
 ## Report Contract
 
-`GRAPH_REPORT.md` is not decorative. It is the navigation layer for users and agents. The clone should preserve that role:
+`GRAPH_REPORT.md` is not decorative. It is the navigation layer for users and agents. Archify should preserve that role:
 
 - summarize graph size and extraction mix
 - list god nodes

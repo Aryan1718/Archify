@@ -1,10 +1,10 @@
 # Customization Points
 
-This file is the boundary between "follow graphify closely" and "change behavior for our use case."
+This file is the boundary between "follow the reference implementation closely" and "change behavior for the Archify use case."
 
 ## Keep These Stable
 
-These parts should stay close to graphify unless there is a strong reason not to:
+These parts should stay close to the reference implementation unless there is a strong reason not to:
 
 - pipeline shape: `detect -> extract -> build -> cluster -> analyze -> report -> export`
 - shared extraction schema
@@ -12,7 +12,7 @@ These parts should stay close to graphify unless there is a strong reason not to
 - incremental code-only update path
 - durable `graph.json` plus human-readable report
 
-Changing these early will make the clone harder to reason about and harder to validate against graphify behavior.
+Changing these early will make the adaptation harder to reason about and harder to validate against reference behavior.
 
 ## Best Places To Customize
 
@@ -25,9 +25,9 @@ Adjust:
 - sensitive-file rules
 - binary-to-text conversion coverage
 
-Reference module:
+Reference area:
 
-- [`graphify/detect.py`](/Users/csuftitan/Desktop/graphify/graphify/detect.py)
+- the detect stage
 
 ### 2. Graph Ontology
 
@@ -38,10 +38,10 @@ Adjust:
 - whether concept nodes are allowed
 - hyperedge usage
 
-Reference modules:
+Reference areas:
 
-- [`graphify/extract.py`](/Users/csuftitan/Desktop/graphify/graphify/extract.py)
-- [`graphify/build.py`](/Users/csuftitan/Desktop/graphify/graphify/build.py)
+- the extract stage
+- the build stage
 
 ### 3. Confidence Policy
 
@@ -62,10 +62,10 @@ Adjust:
 - surprise scoring
 - question suggestion heuristics
 
-Reference modules:
+Reference areas:
 
-- [`graphify/cluster.py`](/Users/csuftitan/Desktop/graphify/graphify/cluster.py)
-- [`graphify/analyze.py`](/Users/csuftitan/Desktop/graphify/graphify/analyze.py)
+- the cluster stage
+- the analyze stage
 
 ### 5. Output Products
 
@@ -76,13 +76,13 @@ Adjust:
 - wiki generation
 - cross-project global graph behavior
 
-Reference modules:
+Reference areas:
 
-- [`graphify/report.py`](/Users/csuftitan/Desktop/graphify/graphify/report.py)
-- [`graphify/export.py`](/Users/csuftitan/Desktop/graphify/graphify/export.py)
-- [`graphify/wiki.py`](/Users/csuftitan/Desktop/graphify/graphify/wiki.py)
+- the report stage
+- the export stage
+- the optional wiki layer
 
-## Recommended Clone Strategy
+## Recommended Adaptation Strategy
 
 Phase 1:
 
@@ -90,7 +90,7 @@ Phase 1:
 
 Phase 2:
 
-- Implement incremental update based on `watch.py`.
+- Implement incremental update based on the update path.
 
 Phase 3:
 
@@ -100,10 +100,10 @@ Phase 4:
 
 - Add optional products such as wiki, global graph, and callflow export.
 
-## What To Decide Before Coding The Clone
+## What To Decide Before Coding The Adaptation
 
 - Which file types are in scope for v1.
 - Whether non-code semantic extraction is part of v1 or v2.
 - The exact node and relation vocabulary for your domain.
-- Whether the clone must remain compatible with graphify-style `graph.json`.
+- Whether Archify must remain compatible with the reference `graph.json` contract.
 - Whether report consumers are humans only, agents only, or both.

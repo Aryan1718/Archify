@@ -9,13 +9,13 @@
                               |___/
 </pre>
 
-<p><strong>Grounded codebase documentation setup</strong></p>
+<p><strong>Grounded codebase documentation</strong></p>
 
 <p><code>npx archify init</code></p>
 
 </div>
 
-Archify is built to generate grounded documentation for a codebase. It creates proof-backed project context that can be used to produce architecture docs, API and contract docs, system setup docs, frontend and backend breakdowns, database documentation, and other repository-level markdown artifacts based on real codebase evidence.
+Archify extracts grounded architecture and codebase context from a repository so it is easier to study, understand, and build similar systems.
 
 ## Quick Start
 
@@ -31,23 +31,23 @@ Then use Archify from your assistant:
 Use Archify on this repo
 ```
 
-## How It Helps
+## What It Does
 
 - Builds a grounded repository knowledge base inside `.archify/`
 - Reuses existing artifacts when they are already fresh
 - Refreshes analysis only when the repository has changed
-- Prepares the grounded inputs used to write codebase documentation
+- Generates synthesis packets and guide artifacts used to study the codebase and write `archify.md`
 
-## Flow
+## How It Works
 
 1. Run `npx archify init` once in the repository.
 2. Ask your assistant to use Archify.
-3. Archify decides what to do next.
+3. Archify checks status and decides what to do next.
 
 What Archify does next:
 - initialize if setup is missing
 - analyze if knowledge is missing or stale
-- generate if the design packet is missing or stale
+- generate if the design packet or guide artifacts are missing or stale
 - reuse existing artifacts if everything is fresh
 
 ## Commands
@@ -57,48 +57,19 @@ What Archify does next:
 | `npx archify init` | Set up Archify in the current repository |
 | `npx archify status` | Show setup state, artifact freshness, and the next recommended action |
 | `npx archify analyze .` | Build or refresh the grounded repository knowledge in `.archify/` |
-| `npx archify generate .` | Build the design packet used for `archify.md` |
+| `npx archify generate .` | Build the synthesis packet and guide artifacts used for `archify.md` |
 | `npx archify clean` | Remove generated artifacts from `.archify/` |
 
-## Project Files
+## Generated Files
 
-After setup, the repository will contain:
+Archify adds:
 
-```text
-.
-|-- archify.config.json
-|-- .archifyignore
-|-- .agents/
-|   `-- skills/
-|       `-- archify/
-|           `-- SKILL.md
-|-- .claude/
-|   `-- skills/
-|       `-- archify/
-|           `-- SKILL.md
-`-- .archify/
-    |-- graph.json
-    |-- GRAPH_REPORT.md
-    |-- facts.json
-    |-- modules.json
-    |-- routes.json
-    |-- database.json
-    |-- services.json
-    |-- dependencies.json
-    |-- docs-summary.json
-    |-- architecture-context.json
-    |-- architecture-context.md
-    |-- manifest.json
-    |-- design-packet.json
-    `-- design-brief.md
-```
+- `archify.config.json` for project configuration
+- `.archifyignore` for scan exclusions
+- project skill files for Codex or Claude Code installs
+- `.archify/` for analysis, synthesis, and guide artifacts
 
-Notes:
-- `.agents/.../SKILL.md` is created for Codex project installs.
-- `.claude/.../SKILL.md` is created for Claude Code project installs.
-- `.archify/` is created when analysis or generation runs.
-
-## Main Outputs
+## Core Artifacts
 
 | File | Purpose |
 | --- | --- |
@@ -107,10 +78,33 @@ Notes:
 | `.archify/manifest.json` | Analysis state and freshness metadata |
 | `.archify/graph.json` | Repository graph output |
 | `.archify/architecture-context.json` | Grounded architecture context |
-| `.archify/design-packet.json` | Input packet used to author `archify.md` |
+| `.archify/design-packet.json` | Synthesis packet used to author `archify.md` |
+| `.archify/archify.guide.json` | Section-by-section guide for generating `archify.md` |
 | `archify.md` | Final architecture prompt pack written by the skill |
 
-## Coverage
+## Available Document
+
+Today, Archify generates the grounded artifacts needed to produce:
+
+- `archify.md`
+
+## Planned Document Types
+
+Archify is designed to extend the same `.archify` evidence model into additional document types:
+
+- `TECH_STACK.md`
+- `API_DESIGN.md`
+- `DATA_MODEL.md`
+- `CONVENTIONS.md`
+- `GLOSSARY.md`
+- `FLOWS.md`
+- `TEST_CASES.md`
+
+These outputs are planned and not generated yet.
+
+All planned document names use uppercase snake case for consistency.
+
+## Repository Understanding
 
 Archify analyzes repository structure and documentation, including:
 
@@ -120,23 +114,15 @@ Archify analyzes repository structure and documentation, including:
 - database and migration files
 - README and supporting architecture documents
 
-## Documentation Output
+Documentation generation is guide-driven:
 
-Archify is designed to support documentation across the codebase, including:
+- `analyze` produces grounded `.archify` artifacts
+- `generate` produces a synthesis packet plus an `archify` guide
+- the installed skill reads the packet and guide before drafting `archify.md`
 
-- repository architecture
-- API and contract documentation
-- frontend, backend, and database breakdowns
-- system setup and component relationships
-- grounded markdown documents built from repository evidence
-
-## Usage Notes
+## Notes
 
 - `init` is the main setup command.
 - `status` is the main inspection command.
 - `analyze` and `generate` are available for manual workflows, but the installed skill is designed to run them when needed.
 - Supporting docs such as `README.md` can be gathered alongside analysis, but grounded `.archify/` artifacts remain the primary source of confirmed facts.
-
-## Built On
-
-Archify builds on a Graphify-style parsing and graph pipeline for codebase extraction, then adds its own `.archify/` artifact layer and documentation workflow on top.

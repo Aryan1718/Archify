@@ -4,7 +4,7 @@ This is the part to follow for feature parity, but it should remain a layer on t
 
 ## What It Covers
 
-Per [docs/how-it-works.md](/Users/csuftitan/Desktop/graphify/docs/how-it-works.md), graphify extends beyond code into:
+In the reference implementation, the pipeline extends beyond code into:
 
 - markdown and text docs
 - PDFs and papers
@@ -16,9 +16,9 @@ All of those still end up in the same graph schema.
 
 ## Pipeline Position
 
-Semantic extraction runs after a usable code graph already exists. That ordering matters because graphify uses graph structure from the code pass to improve later stages, including transcript prompting.
+Semantic extraction runs after a usable code graph already exists. That ordering matters because the reference pipeline uses graph structure from the code pass to improve later stages, including transcript prompting.
 
-For a clone, keep this sequencing:
+For an Archify adaptation, keep this sequencing:
 
 1. Build a deterministic code graph first.
 2. Convert non-code inputs into machine-readable sidecars when needed.
@@ -35,7 +35,7 @@ Examples:
 - `.xlsx` to markdown and structural nodes
 - Google Workspace shortcuts to markdown sidecars
 
-For your clone, keep converters isolated from the semantic extractor itself. The semantic layer should consume normalized text or media transcripts, not raw product-specific formats.
+For this adaptation, keep converters isolated from the semantic extractor itself. The semantic layer should consume normalized text or media transcripts, not raw product-specific formats.
 
 ## Media Handling
 
@@ -75,4 +75,4 @@ This is the likeliest area for customization. Typical changes:
 - domain-specific prompt instructions
 - selective support for file/media types
 
-The clone should make those policy choices configurable without changing the base graph contract.
+The adaptation should make those policy choices configurable without changing the base graph contract.
