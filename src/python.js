@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 
 import { ArchifyError } from "./errors.js";
 
-export function runPythonEngine({ appRoot, repoRoot, command, targetPath, config }) {
+export function runPythonEngine({ appRoot, repoRoot, command, targetPath, config, docType }) {
   const pythonRoot = path.join(appRoot, "python");
   const args = [
     "-m",
@@ -16,6 +16,9 @@ export function runPythonEngine({ appRoot, repoRoot, command, targetPath, config
     "--config-json",
     JSON.stringify(config)
   ];
+  if (docType) {
+    args.push("--doc-type", docType);
+  }
 
   const existingPythonPath = process.env.PYTHONPATH;
   const pythonPath = existingPythonPath

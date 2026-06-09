@@ -36,7 +36,7 @@ Use Archify on this repo
 - Builds a grounded repository knowledge base inside `.archify/`
 - Reuses existing artifacts when they are already fresh
 - Refreshes analysis only when the repository has changed
-- Generates synthesis packets and guide artifacts used to study the codebase and write `archify.md`
+- Generates synthesis packets and guide artifacts used to study the codebase and write the selected output document
 
 ## How It Works
 
@@ -48,6 +48,7 @@ What Archify does next:
 - initialize if setup is missing
 - analyze if knowledge is missing or stale
 - generate if the design packet or guide artifacts are missing or stale
+- write if the selected final document is missing or stale
 - reuse existing artifacts if everything is fresh
 
 ## Commands
@@ -55,9 +56,10 @@ What Archify does next:
 | Command | Purpose |
 | --- | --- |
 | `npx archify init` | Set up Archify in the current repository |
-| `npx archify status` | Show setup state, artifact freshness, and the next recommended action |
+| `npx archify status [--doc-type <type>]` | Show setup state, doc-specific artifact freshness, and the next recommended action |
 | `npx archify analyze .` | Build or refresh the grounded repository knowledge in `.archify/` |
-| `npx archify generate .` | Build the synthesis packet and guide artifacts used for `archify.md` |
+| `npx archify generate . [--doc-type <type>]` | Build the synthesis packet and guide artifacts for the selected document type |
+| `npx archify write . [--doc-type <type>]` | Write the selected root-level document from the generated synthesis artifacts |
 | `npx archify clean` | Remove generated artifacts from `.archify/` |
 
 ## Generated Files
@@ -78,31 +80,36 @@ Archify adds:
 | `.archify/manifest.json` | Analysis state and freshness metadata |
 | `.archify/graph.json` | Repository graph output |
 | `.archify/architecture-context.json` | Grounded architecture context |
-| `.archify/design-packet.json` | Synthesis packet used to author `archify.md` |
-| `.archify/archify.guide.json` | Section-by-section guide for generating `archify.md` |
-| `archify.md` | Final architecture prompt pack written by the skill |
+| `.archify/docs/<docType>/packet.json` | Doc-scoped synthesis packet used to author the selected root document |
+| `.archify/docs/<docType>/guide.json` | Section-by-section guide for generating the selected root document |
+| `.archify/docs/<docType>/brief.md` | Human-readable synthesis brief for the selected document type |
+| `.archify/docs/<docType>/guide.md` | Human-readable guide brief for the selected document type |
+| Root document output | `archify.md` by default, or the file mapped from `--doc-type` |
 
-## Available Document
+## Available Documents
 
-Today, Archify generates the grounded artifacts needed to produce:
+Archify supports these document types today:
 
-- `archify.md`
+| `--doc-type` value | Output file |
+| --- | --- |
+| `archify` | `archify.md` |
+| `tech_stack` | `TECH_STACK.md` |
+| `api_design` | `API_DESIGN.md` |
+| `data_model` | `DATA_MODEL.md` |
+| `conventions` | `CONVENTIONS.md` |
+| `glossary` | `GLOSSARY.md` |
+| `flows` | `FLOWS.md` |
+| `test_cases` | `TEST_CASES.md` |
 
-## Planned Document Types
+If `--doc-type` is omitted, Archify defaults to `archify` and writes `archify.md`.
 
-Archify is designed to extend the same `.archify` evidence model into additional document types:
+Examples:
 
-- `TECH_STACK.md`
-- `API_DESIGN.md`
-- `DATA_MODEL.md`
-- `CONVENTIONS.md`
-- `GLOSSARY.md`
-- `FLOWS.md`
-- `TEST_CASES.md`
-
-These outputs are planned and not generated yet.
-
-All planned document names use uppercase snake case for consistency.
+```bash
+npx archify status --doc-type tech_stack
+npx archify generate . --doc-type api_design
+npx archify write . --doc-type flows
+```
 
 ## Repository Understanding
 
@@ -117,12 +124,13 @@ Archify analyzes repository structure and documentation, including:
 Documentation generation is guide-driven:
 
 - `analyze` produces grounded `.archify` artifacts
-- `generate` produces a synthesis packet plus an `archify` guide
-- the installed skill reads the packet and guide before drafting `archify.md`
+- `generate` produces a doc-scoped synthesis packet plus a doc-scoped guide
+- `write` materializes the selected root document from those artifacts
+- the installed skill reads the selected doc type's packet and guide before drafting that document
 
 ## Notes
 
 - `init` is the main setup command.
 - `status` is the main inspection command.
-- `analyze` and `generate` are available for manual workflows, but the installed skill is designed to run them when needed.
+- `analyze`, `generate`, and `write` are available for manual workflows, but the installed skill is designed to run them when needed.
 - Supporting docs such as `README.md` can be gathered alongside analysis, but grounded `.archify/` artifacts remain the primary source of confirmed facts.

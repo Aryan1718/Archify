@@ -9,6 +9,7 @@ import {
   RESERVED_ARTIFACTS
 } from "./constants.js";
 import { ensureConfig, ensureIgnoreFile, ensureOutputDir, loadConfig } from "./config.js";
+import { DEFAULT_DOC_TYPE, DOC_TYPES, getDocTypeSpec } from "./doc-types.js";
 import { ArchifyError } from "./errors.js";
 import { pathExists, removeContents } from "./fs-utils.js";
 import { resolveSetupOptions } from "./prompt.js";
@@ -16,8 +17,18 @@ import { runPythonEngine } from "./python.js";
 import { installSkillTemplates } from "./skills.js";
 
 function resolveTargetPath(repoRoot, inputPath) {
-  const targetPath = path.resolve(repoRoot, inputPath ?? ".");
-  return targetPath;
+  return path.resolve(repoRoot, inputPath ?? ".");
+}
+
+function resolveDocType(docType = DEFAULT_DOC_TYPE) {
+  const spec = getDocTypeSpec(docType);
+  if (!spec) {
+    throw new ArchifyError(`Unsupported doc type "${docType}".`, {
+      code: "DOC_TYPE_UNSUPPORTED",
+      exitCode: 2
+    });
+  }
+  return spec;
 }
 
 async function validateTargetPath(targetPath) {
@@ -31,9 +42,13 @@ async function validateTargetPath(targetPath) {
 }
 
 async function validateGenerateArtifacts(repoRoot, outputDir) {
+  return validateReadyArtifacts(repoRoot, outputDir, REQUIRED_GENERATE_ARTIFACTS, "Generate");
+}
+
+async function validateReadyArtifacts(repoRoot, outputDir, artifacts, operationName) {
   const missing = [];
 
-  for (const artifact of REQUIRED_GENERATE_ARTIFACTS) {
+  for (const artifact of artifacts) {
     const artifactPath = path.join(repoRoot, outputDir, artifact);
     if (!(await pathExists(artifactPath))) {
       missing.push(artifact);
@@ -51,10 +66,52 @@ async function validateGenerateArtifacts(repoRoot, outputDir) {
 
   if (missing.length > 0) {
     throw new ArchifyError(
-      `Generate requires completed analysis artifacts in ${outputDir}. Missing or incomplete: ${missing.join(", ")}.`,
-      { code: "GENERATE_PREREQS_MISSING", exitCode: 2 }
+      `${operationName} requires completed artifacts in ${outputDir}. Missing or incomplete: ${missing.join(", ")}.`,
+      {
+        code: `${operationName.toUpperCase()}_PREREQS_MISSING`,
+        exitCode: 2
+      }
     );
   }
+}
+
+function docArtifactDir(outputDir, docType) {
+  return path.join(outputDir, "docs", docType);
+}
+
+function synthesisArtifactPaths(outputDir, docType) {
+  const dir = docArtifactDir(outputDir, docType);
+  return {
+    dir,
+    packet: path.join(dir, "packet.json"),
+    brief: path.join(dir, "brief.md"),
+    guide: path.join(dir, "guide.json"),
+    guideBrief: path.join(dir, "guide.md")
+  };
+}
+
+async function loadJsonIfPresent(filePath) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+async function resolveSynthesisStatus(outputDir, docType) {
+  const paths = synthesisArtifactPaths(outputDir, docType);
+  const packet = await loadJsonIfPresent(paths.packet);
+  const guide = await loadJsonIfPresent(paths.guide);
+
+  if (packet || guide || docType !== DEFAULT_DOC_TYPE) {
+    return { paths, packet, guide };
+  }
+
+  return {
+    paths,
+    packet: await loadJsonIfPresent(path.join(outputDir, "design-packet.json")),
+    guide: await loadJsonIfPresent(path.join(outputDir, "archify.guide.json"))
+  };
 }
 
 const STALE_CHECK_IGNORED_DIRS = new Set([
@@ -70,12 +127,12 @@ const STALE_CHECK_IGNORED_DIRS = new Set([
 async function collectNewestWorkspaceChange(rootDir, currentDir = rootDir) {
   const entries = await fs.readdir(currentDir, { withFileTypes: true });
   let newest = null;
+  const outputFiles = new Set(Object.values(DOC_TYPES).map((item) => item.outputFile));
 
   for (const entry of entries) {
-    if (entry.name === "archify.md") {
+    if (currentDir === rootDir && outputFiles.has(entry.name)) {
       continue;
     }
-
     const fullPath = path.join(currentDir, entry.name);
     const relativePath = path.relative(rootDir, fullPath) || entry.name;
 
@@ -164,8 +221,9 @@ export async function analyzeCommand(appRoot, repoRoot, targetArg) {
   };
 }
 
-export async function generateCommand(appRoot, repoRoot, targetArg) {
+export async function generateCommand(appRoot, repoRoot, targetArg, options = {}) {
   const { data: config } = await loadConfig(repoRoot);
+  const doc = resolveDocType(options.docType);
   const targetPath = resolveTargetPath(repoRoot, targetArg);
   await validateTargetPath(targetPath);
   await validateGenerateArtifacts(repoRoot, config.defaults.outputDir || OUTPUT_DIR);
@@ -175,13 +233,56 @@ export async function generateCommand(appRoot, repoRoot, targetArg) {
     repoRoot,
     command: "generate",
     targetPath,
-    config
+    config,
+    docType: doc.id
   });
 
   return {
     command: "generate",
+    docType: doc.id,
     targetPath,
     outputDir: config.defaults.outputDir || OUTPUT_DIR,
+    result
+  };
+}
+
+export async function writeCommand(appRoot, repoRoot, targetArg, options = {}) {
+  const { data: config } = await loadConfig(repoRoot);
+  const doc = resolveDocType(options.docType);
+  const targetPath = resolveTargetPath(repoRoot, targetArg);
+  await validateTargetPath(targetPath);
+  const outputDirName = config.defaults.outputDir || OUTPUT_DIR;
+  const outputDir = path.join(repoRoot, outputDirName);
+  const synthesisPaths = synthesisArtifactPaths(outputDir, doc.id);
+  await validateReadyArtifacts(repoRoot, outputDirName, [
+    path.relative(outputDir, synthesisPaths.packet).split(path.sep).join("/"),
+    path.relative(outputDir, synthesisPaths.guide).split(path.sep).join("/")
+  ], "Write");
+
+  const documentPath = path.join(repoRoot, doc.outputFile);
+  const exists = await pathExists(documentPath);
+  if (exists && !options.force) {
+    throw new ArchifyError(
+      `${doc.outputFile} already exists. Re-run with \`--force\` to overwrite it.`,
+      { code: "OUTPUT_DOCUMENT_EXISTS", exitCode: 2 }
+    );
+  }
+
+  const result = runPythonEngine({
+    appRoot,
+    repoRoot,
+    command: "write",
+    targetPath,
+    config,
+    docType: doc.id
+  });
+
+  return {
+    command: "write",
+    docType: doc.id,
+    targetPath,
+    outputFile: documentPath,
+    overwritten: exists,
     result
   };
 }
@@ -202,17 +303,20 @@ export async function cleanCommand(repoRoot) {
   };
 }
 
-export async function statusCommand(repoRoot) {
+export async function statusCommand(repoRoot, options = {}) {
+  const doc = resolveDocType(options.docType);
   const configPath = path.join(repoRoot, "archify.config.json");
   const configExists = await pathExists(configPath);
 
   if (!configExists) {
     return {
       command: "status",
+      docType: doc.id,
+      outputFile: doc.outputFile,
       installed: false,
       repoRoot,
       summary: "Archify is not set up in this repository yet.",
-      nextStep: "Run `npx archify init` in this repository.",
+      nextStep: "Run `npx archify init` in this repository."
     };
   }
 
@@ -222,8 +326,9 @@ export async function statusCommand(repoRoot) {
   const outputDirExists = await pathExists(outputDir);
   const manifestPath = path.join(outputDir, "manifest.json");
   const manifestExists = outputDirExists ? await pathExists(manifestPath) : false;
-  const designPacketPath = path.join(outputDir, "design-packet.json");
-  const designPacketExists = outputDirExists ? await pathExists(designPacketPath) : false;
+  const synthesis = await resolveSynthesisStatus(outputDir, doc.id);
+  const finalDocumentPath = path.join(repoRoot, doc.outputFile);
+  const finalDocumentExists = await pathExists(finalDocumentPath);
 
   let manifest = null;
   let manifestStatus = "missing";
@@ -236,16 +341,8 @@ export async function statusCommand(repoRoot) {
     }
   }
 
-  let designPacket = null;
-  let designPacketStatus = "missing";
-  if (designPacketExists) {
-    try {
-      designPacket = JSON.parse(await fs.readFile(designPacketPath, "utf8"));
-      designPacketStatus = designPacket?.status ?? "unknown";
-    } catch {
-      designPacketStatus = "invalid";
-    }
-  }
+  const designPacket = synthesis.packet;
+  const designPacketStatus = designPacket?.status ?? "missing";
 
   const artifactStates = await Promise.all(
     ALL_ANALYSIS_ARTIFACTS.map(async (artifact) => ({
@@ -278,9 +375,29 @@ export async function statusCommand(repoRoot) {
     )
   );
 
+  let finalDocumentGeneratedAt = null;
+  if (finalDocumentExists) {
+    try {
+      const stats = await fs.stat(finalDocumentPath);
+      finalDocumentGeneratedAt = stats.mtime.toISOString();
+    } catch {
+      finalDocumentGeneratedAt = null;
+    }
+  }
+
+  const finalDocumentGeneratedAtMs = parseTimestamp(finalDocumentGeneratedAt);
+  const finalDocumentStale = Boolean(
+    generatedPacketReady &&
+    finalDocumentExists &&
+    designPacketGeneratedAtMs !== null &&
+    finalDocumentGeneratedAtMs !== null &&
+    designPacketGeneratedAtMs > finalDocumentGeneratedAtMs
+  );
+
   let recommendedAction = "reuse";
-  let summary = "Archify is set up and repository knowledge is ready to reuse.";
+  let summary = `Archify is set up and ${doc.outputFile} is ready to reuse.`;
   let nextStep = "Ask your AI assistant to use Archify on this repo.";
+  const packetLabel = doc.id === DEFAULT_DOC_TYPE ? "design packet" : `${doc.outputFile} synthesis packet`;
 
   if (!analysisReady) {
     recommendedAction = "analyze";
@@ -292,22 +409,34 @@ export async function statusCommand(repoRoot) {
     nextStep = "Ask your AI assistant to use Archify on this repo so it can refresh the knowledge, or run `npx archify analyze .` manually.";
   } else if (!generatedPacketReady) {
     recommendedAction = "generate";
-    summary = "Archify knowledge is ready, but the design packet has not been generated yet.";
-    nextStep = "Ask your AI assistant to use Archify on this repo, or run `npx archify generate .` if you want the design packet now.";
+    summary = `Archify knowledge is ready, but the ${packetLabel} has not been generated yet.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo, or run \`npx archify generate . --doc-type ${doc.id}\` if you want ${doc.outputFile} now.`;
   } else if (designPacketStale) {
     recommendedAction = "generate";
-    summary = "Archify knowledge is ready, but the design packet is older than the latest analysis.";
-    nextStep = "Ask your AI assistant to use Archify on this repo so it can refresh the design packet, or run `npx archify generate .` manually.";
+    summary = `Archify knowledge is ready, but the ${packetLabel} is older than the latest analysis.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo so it can refresh ${doc.outputFile}, or run \`npx archify generate . --doc-type ${doc.id}\` manually.`;
+  } else if (!finalDocumentExists) {
+    recommendedAction = "write";
+    summary = `Archify synthesis artifacts are ready, but ${doc.outputFile} has not been written yet.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo, or run \`npx archify write . --doc-type ${doc.id}\` if you want the final document now.`;
+  } else if (finalDocumentStale) {
+    recommendedAction = "write";
+    summary = `${doc.outputFile} exists, but it is older than the latest synthesis packet.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo so it can refresh ${doc.outputFile}, or run \`npx archify write . --doc-type ${doc.id} --force\` manually.`;
   }
 
   return {
     command: "status",
+    docType: doc.id,
+    outputFile: doc.outputFile,
     installed: true,
     repoRoot,
     outputDir,
     outputDirExists,
     analysisReady,
     generatedPacketReady,
+    finalDocumentExists,
+    finalDocumentStale,
     knowledgeStale,
     designPacketStale,
     recommendedAction,
@@ -316,28 +445,41 @@ export async function statusCommand(repoRoot) {
     config: {
       installMode: config.skillInstall.mode,
       platforms: config.skillInstall.platforms,
-      outputDir: outputDirName,
+      outputDir: outputDirName
     },
     manifest: manifest
       ? {
           status: manifest.status ?? "unknown",
           mode: manifest.mode ?? null,
           targetPath: manifest.targetPath ?? null,
-          generatedAt: manifest.generatedAt ?? null,
+          generatedAt: manifest.generatedAt ?? null
         }
       : null,
     designPacket: designPacket
       ? {
+          docType: designPacket.docType ?? doc.id,
           status: designPacket.status ?? "unknown",
-          generatedAt: designPacket.generatedAt ?? null,
+          generatedAt: designPacket.generatedAt ?? null
         }
       : null,
+    finalDocument: {
+      path: finalDocumentPath,
+      exists: finalDocumentExists,
+      generatedAt: finalDocumentGeneratedAt
+    },
     freshness: {
       newestWorkspaceChange,
       manifestGeneratedAt: manifest?.generatedAt ?? null,
       designPacketGeneratedAt: designPacket?.generatedAt ?? null,
+      finalDocumentGeneratedAt
     },
     availableArtifacts,
     missingArtifacts,
+    synthesisArtifacts: {
+      packetPath: synthesis.paths.packet,
+      briefPath: synthesis.paths.brief,
+      guidePath: synthesis.paths.guide,
+      guideBriefPath: synthesis.paths.guideBrief
+    }
   };
 }

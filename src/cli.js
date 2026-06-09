@@ -6,7 +6,8 @@ import {
   cleanCommand,
   generateCommand,
   initCommand,
-  statusCommand
+  statusCommand,
+  writeCommand
 } from "./commands.js";
 import { ArchifyError } from "./errors.js";
 
@@ -16,9 +17,10 @@ function printUsage() {
 Usage:
   npx archify init [--install-mode global]
   npx archify init [--install-mode project --project-path <path> --platform codex|claude-code|both]
-  npx archify status
+  npx archify status [--doc-type <type>]
   npx archify analyze <path>
-  npx archify generate <path>
+  npx archify generate <path> [--doc-type <type>]
+  npx archify write <path> [--doc-type <type>] [--force]
   npx archify clean
 
 Recommended flow:
@@ -62,6 +64,17 @@ function parseOptions(args) {
       continue;
     }
 
+    if (value === "--force") {
+      options.force = true;
+      continue;
+    }
+
+    if (value === "--doc-type") {
+      options.docType = args[index + 1];
+      index += 1;
+      continue;
+    }
+
     positional.push(value);
   }
 
@@ -92,13 +105,16 @@ export async function main(argv) {
         result = await initCommand(repoRoot, options);
         break;
       case "status":
-        result = await statusCommand(repoRoot);
+        result = await statusCommand(repoRoot, options);
         break;
       case "analyze":
         result = await analyzeCommand(appRoot, repoRoot, rest[0]);
         break;
       case "generate":
-        result = await generateCommand(appRoot, repoRoot, rest[0]);
+        result = await generateCommand(appRoot, repoRoot, rest[0], options);
+        break;
+      case "write":
+        result = await writeCommand(appRoot, repoRoot, rest[0], options);
         break;
       case "clean":
         result = await cleanCommand(repoRoot);
