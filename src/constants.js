@@ -49,17 +49,9 @@ export const OPERATIONAL_ARTIFACTS = [
   "manifest.json"
 ];
 
-export const SYNTHESIS_ARTIFACTS = [
-  "design-packet.json",
-  "design-brief.md",
-  "archify.guide.json",
-  "archify.guide.md"
-];
-
 export const ALL_ANALYSIS_ARTIFACTS = [
   ...RESERVED_ARTIFACTS,
-  ...OPERATIONAL_ARTIFACTS,
-  ...SYNTHESIS_ARTIFACTS
+  ...OPERATIONAL_ARTIFACTS
 ];
 
 export const DEFAULT_CONFIG = {

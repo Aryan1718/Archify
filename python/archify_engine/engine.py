@@ -1110,6 +1110,520 @@ def _render_archify_guide_brief(guide: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _markdown_bullets(items: list[str], *, empty: str) -> list[str]:
+    values = [item for item in items if item]
+    if not values:
+        return [f"- {empty}"]
+    return [f"- {item}" for item in values]
+
+
+def _evidence_line(evidence: list[str]) -> str | None:
+    refs = [str(item) for item in evidence if item]
+    if not refs:
+        return None
+    return f"Evidence: {', '.join(refs)}"
+
+
+def _render_packet_section_items(items: list[dict[str, Any]], *, inferred: bool = False) -> list[str]:
+    lines: list[str] = []
+    if not items:
+        return ["No grounded items were available for this section."]
+
+    for item in items:
+        name = item.get("name") or item.get("title") or item.get("question") or item.get("summary") or "Untitled item"
+        summary = item.get("summary") or item.get("statement") or item.get("question") or ""
+        prefix = "Inferred: " if inferred else ""
+        lines.append(f"- {prefix}**{name}**")
+        if summary and summary != name:
+            lines.append(f"  {summary}")
+        confidence = item.get("confidence")
+        if confidence:
+            lines.append(f"  Confidence: {confidence}")
+        for field_name, label in (
+            ("kind", "Kind"),
+            ("sourcePath", "Source path"),
+            ("sourcePaths", "Source paths"),
+            ("subsystemId", "Subsystem"),
+            ("sourceSubsystemId", "Source subsystem"),
+            ("targetSubsystemId", "Target subsystem"),
+            ("relation", "Relation"),
+            ("relatedSubsystems", "Related subsystems"),
+        ):
+            value = item.get(field_name)
+            if not value:
+                continue
+            if isinstance(value, list):
+                rendered = ", ".join(str(entry) for entry in value if entry)
+            else:
+                rendered = str(value)
+            if rendered:
+                lines.append(f"  {label}: {rendered}")
+        evidence_line = _evidence_line(item.get("evidence", []))
+        if evidence_line:
+            lines.append(f"  {evidence_line}")
+    return lines
+
+
+def _render_confirmed_sections(packet: dict[str, Any]) -> list[str]:
+    sections = packet.get("confirmedFromCodebase", [])
+    lines: list[str] = []
+    if not sections:
+        return ["Grounded confirmed sections were not available in the design packet."]
+
+    for section in sections:
+        title = section.get("title", "Untitled Section")
+        lines.extend([f"### {title}", ""])
+        summary = section.get("summary")
+        if summary:
+            lines.extend([summary, ""])
+        lines.extend(_render_packet_section_items(section.get("items", [])))
+        evidence_line = _evidence_line(section.get("evidence", []))
+        if evidence_line:
+            lines.extend(["", evidence_line])
+        lines.append("")
+    return lines[:-1] if lines and lines[-1] == "" else lines
+
+
+def _render_inferred_sections(packet: dict[str, Any]) -> list[str]:
+    sections = packet.get("inferredArchitecture", [])
+    lines: list[str] = []
+    if not sections:
+        return ["No strong additional inferred architecture was available."]
+
+    for section in sections:
+        title = section.get("title", "Untitled Section")
+        lines.extend([f"### {title}", ""])
+        summary = section.get("summary")
+        if summary:
+            lines.extend([f"Inferred summary: {summary}", ""])
+        lines.extend(_render_packet_section_items(section.get("items", []), inferred=True))
+        evidence_line = _evidence_line(section.get("evidence", []))
+        if evidence_line:
+            lines.extend(["", evidence_line])
+        lines.append("")
+    return lines[:-1] if lines and lines[-1] == "" else lines
+
+
+def _render_uncertainty_sections(packet: dict[str, Any]) -> list[str]:
+    sections = packet.get("openQuestionsAndUncertainty", [])
+    lines: list[str] = []
+    if not sections:
+        return ["No major unresolved questions were extracted from the grounded artifacts."]
+
+    for section in sections:
+        title = section.get("title", "Untitled Section")
+        lines.extend([f"### {title}", ""])
+        lines.extend(_render_packet_section_items(section.get("items", []), inferred=True))
+        lines.append("")
+    return lines[:-1] if lines and lines[-1] == "" else lines
+
+
+def _render_archify_markdown(packet: dict[str, Any], guide: dict[str, Any]) -> str:
+    supporting = packet.get("supportingDocuments", {})
+    summaries = packet.get("summaries", {})
+    prompt_behavior = packet.get("generationRules", {}).get("promptBehavior", {})
+    diagram_policy = packet.get("generationRules", {}).get("diagramCapabilityPolicy", {})
+    questionnaire = packet.get("questionnaireTemplate", {})
+    read_order = guide.get("readOrder", [])
+
+    lines = [
+        "# Archify",
+        "",
+        "## System Prompt",
+        "You are an architecture-writing assistant producing a grounded, upload-ready architecture prompt pack for this repository.",
+        "Treat `.archify` artifacts as the primary source of confirmed facts. Keep confirmed findings separate from inferred architecture and preserve uncertainty when evidence is weak.",
+        "Read the synthesis artifacts in the documented order before relying on any additional repository context.",
+        "",
+        "## User Prompt",
+        "Use the grounded repository context below to produce the architecture artifact the user asks for.",
+        "Start by asking which architecture artifact the user wants from the supported options, then ask which visual style they want before generating any final architecture or diagram output.",
+        "Wait for those answers before finalizing the architecture response. If image generation is unavailable, return a render-ready diagram specification instead of pretending an image was created.",
+        "",
+        "## Grounded Repository Context",
+        f"Target path: `{packet.get('targetPath', '')}`",
+        f"Scan root: `{packet.get('scanRoot', '')}`",
+        "",
+        f"System summary: {summaries.get('system', {}).get('summary', 'No grounded system summary was available.')}",
+        "",
+        "Grounded artifacts to read in order:",
+    ]
+    lines.extend(_markdown_bullets([f"`{item}`" for item in read_order], empty="No artifact read order was available."))
+    lines.extend([
+        "",
+        "Repository summary snapshots:",
+        f"- Graph summary: {json.dumps(summaries.get('graph', {}), sort_keys=True)}",
+        f"- Facts summary: {json.dumps(summaries.get('facts', {}), sort_keys=True)}",
+        f"- Services summary: {json.dumps(summaries.get('services', {}), sort_keys=True)}",
+        f"- Routes summary: {json.dumps(summaries.get('routes', {}), sort_keys=True)}",
+        f"- Database summary: {json.dumps(summaries.get('database', {}), sort_keys=True)}",
+        f"- Dependencies summary: {json.dumps(summaries.get('dependencies', {}), sort_keys=True)}",
+        f"- Docs summary: {json.dumps(summaries.get('docs', {}), sort_keys=True)}",
+        "",
+        "Supporting docs discovered by Archify:",
+    ])
+    lines.extend(_markdown_bullets(
+        [
+            *( [f"Primary README: `{supporting.get('primaryReadme')}`"] if supporting.get("primaryReadme") else [] ),
+            *[f"Additional supporting doc: `{item}`" for item in supporting.get("additionalDocs", [])],
+        ],
+        empty="No supporting README or optional architecture docs were recorded."
+    ))
+    lines.extend([
+        "",
+        "## Confirmed From Codebase",
+    ])
+    lines.extend(_render_confirmed_sections(packet))
+    lines.extend([
+        "",
+        "## Inferred Architecture",
+    ])
+    lines.extend(_render_inferred_sections(packet))
+    lines.extend([
+        "",
+        f"## {questionnaire.get('sectionTitle', 'Questions Before Architecture Generation')}",
+        "Ask these before finalizing the architecture deliverable:",
+    ])
+    lines.extend(_markdown_bullets(questionnaire.get("questions", []), empty="No questionnaire items were provided."))
+    lines.extend([
+        "",
+        "## Diagram / Image Generation Instructions",
+        f"- Ask artifact type first: {bool(prompt_behavior.get('firstResponseMustAskArtifactType', False))}",
+        f"- Supported artifact options: {', '.join(prompt_behavior.get('artifactTypeOptions', [])) or 'None recorded'}",
+        f"- Ask visual style first: {bool(prompt_behavior.get('firstResponseMustAskVisualStyle', False))}",
+        f"- Supported visual style options: {', '.join(prompt_behavior.get('visualStyleOptions', [])) or 'None recorded'}",
+        f"- Must wait for answers before final output: {bool(prompt_behavior.get('mustWaitForAnswersBeforeFinalOutput', False))}",
+        f"- Generate image when supported: {bool(diagram_policy.get('generateImageWhenAppSupportsIt', False))}",
+        f"- Fallback to render-ready diagram spec when image generation is unavailable: {bool(diagram_policy.get('fallbackToRenderReadyDiagramSpecWhenImageGenerationUnavailable', False))}",
+        "",
+        "## Open Questions / Uncertainty",
+    ])
+    lines.extend(_render_uncertainty_sections(packet))
+    return "\n".join(lines) + "\n"
+
+
+def _validate_archify_markdown(document: str, guide: dict[str, Any]) -> None:
+    missing_sections = []
+    for section in guide.get("sectionPlan", []):
+        title = section.get("section")
+        if title and f"## {title}" not in document:
+            missing_sections.append(title)
+    if missing_sections:
+        raise RuntimeError(f"WRITE_VALIDATION_FAILED: missing sections: {', '.join(missing_sections)}")
+    if "## Confirmed From Codebase" not in document or "## Inferred Architecture" not in document:
+        raise RuntimeError("WRITE_VALIDATION_FAILED: confirmed and inferred sections must both be present")
+
+
+DOC_SPECS = {
+    "archify": {"outputFile": "archify.md"},
+    "tech_stack": {"outputFile": "TECH_STACK.md"},
+    "api_design": {"outputFile": "API_DESIGN.md"},
+    "data_model": {"outputFile": "DATA_MODEL.md"},
+    "conventions": {"outputFile": "CONVENTIONS.md"},
+    "glossary": {"outputFile": "GLOSSARY.md"},
+    "flows": {"outputFile": "FLOWS.md"},
+    "test_cases": {"outputFile": "TEST_CASES.md"},
+}
+
+
+def _doc_spec(doc_type: str) -> dict[str, Any]:
+    spec = DOC_SPECS.get(doc_type)
+    if spec is None:
+        raise RuntimeError(f"UNSUPPORTED_DOC_TYPE: {doc_type}")
+    return spec
+
+
+def _doc_artifact_paths(config: EngineConfig, doc_type: str) -> dict[str, Path]:
+    base = config.output_dir / "docs" / doc_type
+    return {
+        "dir": base,
+        "packet": base / "packet.json",
+        "brief": base / "brief.md",
+        "guide": base / "guide.json",
+        "guide_brief": base / "guide.md",
+    }
+
+
+def _doc_artifact_relpath(config: EngineConfig, doc_type: str, filename: str) -> str:
+    return Path(config.output_dir.name, "docs", doc_type, filename).as_posix()
+
+
+def _rewrite_text_refs(text: str, config: EngineConfig, doc_type: str) -> str:
+    if doc_type != "archify":
+        return text
+    replacements = {
+        ".archify/design-packet.json": _doc_artifact_relpath(config, doc_type, "packet.json"),
+        ".archify/archify.guide.json": _doc_artifact_relpath(config, doc_type, "guide.json"),
+        ".archify/archify.guide.md": _doc_artifact_relpath(config, doc_type, "guide.md"),
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return text
+
+
+def _rewrite_payload_refs(payload: Any, config: EngineConfig, doc_type: str) -> Any:
+    if isinstance(payload, str):
+        return _rewrite_text_refs(payload, config, doc_type)
+    if isinstance(payload, list):
+        return [_rewrite_payload_refs(item, config, doc_type) for item in payload]
+    if isinstance(payload, dict):
+        return {key: _rewrite_payload_refs(value, config, doc_type) for key, value in payload.items()}
+    return payload
+
+
+def _load_ready_doc_artifact(config: EngineConfig, doc_type: str, name: str) -> dict[str, Any]:
+    paths = _doc_artifact_paths(config, doc_type)
+    path_map = {
+        "packet.json": paths["packet"],
+        "guide.json": paths["guide"],
+    }
+    target = path_map[name]
+    payload = _load_json_if_valid(target)
+    if payload is None and doc_type == "archify":
+        legacy_name = "design-packet.json" if name == "packet.json" else "archify.guide.json"
+        payload = _load_json_if_valid(config.output_dir / legacy_name)
+    if payload is None:
+        raise RuntimeError(f"GENERATE_INPUT_MISSING: {name}")
+    if payload.get("status") != "ready":
+        raise RuntimeError(f"GENERATE_INPUT_NOT_READY: {name} (status={payload.get('status', 'unknown')})")
+    return payload
+
+
+def _build_generic_packet(target_path: str, config: EngineConfig, doc_type: str) -> dict[str, Any]:
+    spec = _doc_spec(doc_type)
+    graph = _load_required_ready_artifact(config, "graph.json")
+    facts = _load_required_ready_artifact(config, "facts.json")
+    modules = _load_required_ready_artifact(config, "modules.json")
+    routes = _load_required_ready_artifact(config, "routes.json")
+    database = _load_required_ready_artifact(config, "database.json")
+    services = _load_required_ready_artifact(config, "services.json")
+    dependencies = _load_required_ready_artifact(config, "dependencies.json")
+    docs_summary = _load_required_ready_artifact(config, "docs-summary.json")
+    architecture_context = _load_required_ready_artifact(config, "architecture-context.json")
+    primary_readme = _primary_readme_path(docs_summary)
+    additional_docs = _additional_supporting_docs(docs_summary, primary_readme)
+    subsystems = architecture_context.get("subsystems", [])
+    entrypoints = architecture_context.get("key_entrypoints", [])
+    flows = architecture_context.get("data_flows", [])
+    questions = architecture_context.get("open_questions", [])
+    services_list = services.get("services", [])
+    confirmed_routes = routes.get("confirmedRoutes", [])
+    inferred_title = {
+        "tech_stack": "Inferred Stack Notes",
+        "api_design": "Inferred Boundaries",
+        "data_model": "Inferred Data Boundaries",
+        "conventions": "Inferred Conventions",
+        "glossary": "Inferred Terms",
+        "flows": "Inferred Flow Notes",
+        "test_cases": "Recommended Test Cases",
+    }[doc_type]
+    confirmed_title = {
+        "tech_stack": "Confirmed Stack",
+        "api_design": "Confirmed Interfaces",
+        "data_model": "Confirmed Data Structures",
+        "conventions": "Observed Conventions",
+        "glossary": "Confirmed Terms",
+        "flows": "Confirmed Flows",
+        "test_cases": "Grounded Coverage Inputs",
+    }[doc_type]
+
+    overview = {
+        "tech_stack": f"Grounded stack summary across {len(services_list)} service surface(s), {len(confirmed_routes)} route(s), and {database.get('summary', {}).get('tableCount', 0)} table(s).",
+        "api_design": f"Grounded API surface from {len(confirmed_routes)} route(s) and {len(entrypoints)} entrypoint candidate(s).",
+        "data_model": f"Grounded data summary from {database.get('summary', {}).get('tableCount', 0)} table(s) and {len(services_list)} service surface(s).",
+        "conventions": f"Observed conventions from {len(modules.get('modules', []))} module(s) and {len(services_list)} service surface(s).",
+        "glossary": "Grounded glossary terms from subsystems, services, modules, and repository docs.",
+        "flows": f"Grounded flow summary from {len(entrypoints)} entrypoint candidate(s) and {len(flows)} detected flow(s).",
+        "test_cases": "Recommended test cases derived from grounded repository signals. This document does not claim these tests already exist.",
+    }[doc_type]
+
+    return {
+        "artifact": "packet.json",
+        "status": "ready",
+        "phase": "generate",
+        "generatedAt": _utc_now(),
+        "docType": doc_type,
+        "outputFile": spec["outputFile"],
+        "targetPath": str(Path(target_path).resolve()),
+        "scanRoot": config.raw.get("defaults", {}).get("sourceRoot", "."),
+        "artifacts": {
+            "graph": _artifact_relpath(config, "graph.json"),
+            "facts": _artifact_relpath(config, "facts.json"),
+            "modules": _artifact_relpath(config, "modules.json"),
+            "routes": _artifact_relpath(config, "routes.json"),
+            "database": _artifact_relpath(config, "database.json"),
+            "services": _artifact_relpath(config, "services.json"),
+            "dependencies": _artifact_relpath(config, "dependencies.json"),
+            "docsSummary": _artifact_relpath(config, "docs-summary.json"),
+            "architectureContext": _artifact_relpath(config, "architecture-context.json"),
+            "architectureContextMarkdown": _artifact_relpath(config, "architecture-context.md"),
+        },
+        "supportingDocuments": {
+            "primaryReadme": primary_readme,
+            "additionalDocs": additional_docs,
+        },
+        "summaries": {
+            "graph": graph.get("summary", {}),
+            "system": architecture_context.get("system", {}),
+            "facts": facts.get("totals", {}),
+            "modules": modules.get("summary", {}),
+            "services": services.get("summary", {}),
+            "routes": routes.get("summary", {}),
+            "database": database.get("summary", {}),
+            "dependencies": dependencies.get("summary", {}),
+            "docs": docs_summary.get("summary", {}),
+        },
+        "documentOverview": overview,
+        "confirmedTitle": confirmed_title,
+        "inferredTitle": inferred_title,
+        "confirmedFromCodebase": [
+            {
+                "title": confirmed_title,
+                "summary": "Grounded sections derived from the analyzed `.archify` artifacts.",
+                "items": [
+                    {"summary": f"Subsystems: {len(subsystems)} detected.", "evidence": [f"artifact:{_artifact_relpath(config, 'architecture-context.json')}"]},
+                    {"summary": f"Services: {len(services_list)} detected.", "evidence": [f"artifact:{_artifact_relpath(config, 'services.json')}"]},
+                    {"summary": f"Routes: {len(confirmed_routes)} detected.", "evidence": [f"artifact:{_artifact_relpath(config, 'routes.json')}"]},
+                    {"summary": f"Tables: {database.get('summary', {}).get('tableCount', 0)} detected.", "evidence": [f"artifact:{_artifact_relpath(config, 'database.json')}"]},
+                ],
+            }
+        ],
+        "inferredArchitecture": [
+            {
+                "title": inferred_title,
+                "summary": "These notes are inferred from grounded artifact relationships and remain labeled as inference.",
+                "items": [
+                    {"summary": "Inferred: repository boundaries likely follow the detected subsystem, service, route, and persistence surfaces.", "evidence": [f"artifact:{_artifact_relpath(config, 'architecture-context.json')}", f"artifact:{_artifact_relpath(config, 'services.json')}"], "inferred": True},
+                    {"summary": "Inferred: when evidence is weak, expand this document conservatively and prefer explicit confirmation over assumptions.", "evidence": [f"artifact:{_artifact_relpath(config, 'docs-summary.json')}", f"artifact:{_artifact_relpath(config, 'facts.json')}"], "inferred": True},
+                ],
+            }
+        ],
+        "openQuestionsAndUncertainty": [
+            {
+                "title": "Open Questions",
+                "items": [
+                    {
+                        "summary": item.get("question") or "Open question recorded in architecture context.",
+                        "evidence": _evidence_refs(item.get("evidence_node_ids", []), item.get("evidence_edge_refs", [])),
+                        "inferred": True,
+                    }
+                    for item in questions[:8]
+                ] or [
+                    {
+                        "summary": "Repository evidence was limited for some topics in this document.",
+                        "evidence": [f"artifact:{_artifact_relpath(config, 'architecture-context.json')}"],
+                        "inferred": True,
+                    }
+                ],
+            }
+        ],
+        "generationRules": {
+            "readOrder": [
+                _doc_artifact_relpath(config, doc_type, "packet.json"),
+                _artifact_relpath(config, "architecture-context.json"),
+                _artifact_relpath(config, "facts.json"),
+                _artifact_relpath(config, "modules.json"),
+                _artifact_relpath(config, "services.json"),
+                _artifact_relpath(config, "dependencies.json"),
+                _artifact_relpath(config, "routes.json"),
+                _artifact_relpath(config, "database.json"),
+                _artifact_relpath(config, "docs-summary.json"),
+                *([primary_readme] if primary_readme else []),
+                *additional_docs,
+            ],
+            "finalOutputFile": spec["outputFile"],
+            "requiredSections": [
+                "Overview",
+                confirmed_title,
+                inferred_title,
+                "Open Questions / Uncertainty",
+            ],
+        },
+    }
+
+
+def _build_generic_guide(packet: dict[str, Any], config: EngineConfig, doc_type: str) -> dict[str, Any]:
+    packet_path = _doc_artifact_relpath(config, doc_type, "packet.json")
+    guide_path = _doc_artifact_relpath(config, doc_type, "guide.json")
+    confirmed_title = packet.get("confirmedTitle")
+    inferred_title = packet.get("inferredTitle")
+    return {
+        "artifact": "guide.json",
+        "status": "ready",
+        "phase": "generate",
+        "generatedAt": _utc_now(),
+        "docType": doc_type,
+        "outputFile": packet.get("outputFile"),
+        "targetPath": packet.get("targetPath"),
+        "goal": f"Guide the agent to write `{packet.get('outputFile')}` from grounded `.archify` artifacts.",
+        "primaryArtifacts": [
+            packet_path,
+            packet.get("artifacts", {}).get("architectureContext"),
+            packet.get("artifacts", {}).get("facts"),
+            packet.get("artifacts", {}).get("modules"),
+            packet.get("artifacts", {}).get("services"),
+            packet.get("artifacts", {}).get("routes"),
+            packet.get("artifacts", {}).get("database"),
+            packet.get("artifacts", {}).get("dependencies"),
+            packet.get("artifacts", {}).get("docsSummary"),
+        ],
+        "readOrder": [
+            packet_path,
+            guide_path,
+            *[item for item in packet.get("generationRules", {}).get("readOrder", []) if item != packet_path],
+        ],
+        "sectionPlan": [
+            {"section": "Overview", "required": True, "factPolicy": "confirmed_first"},
+            {"section": confirmed_title, "required": True, "factPolicy": "confirmed_only"},
+            {"section": inferred_title, "required": True, "factPolicy": "inferred_must_be_labeled"},
+            {"section": "Open Questions / Uncertainty", "required": True, "factPolicy": "uncertainty_only"},
+        ],
+        "validationChecks": [
+            f"Draft and validate `{packet.get('outputFile')}` section by section using `sectionPlan`.",
+            "Keep confirmed facts, inferred notes, and uncertainty separated.",
+        ],
+        "forbiddenBehaviors": [
+            "Do not inspect the whole repository before reading the guide and referenced `.archify` artifacts.",
+            "Do not present inferred items as confirmed.",
+            f"Do not write any primary output file other than `{packet.get('outputFile')}`.",
+        ],
+        "draftingWorkflow": [
+            f"Read `{packet_path}`.",
+            f"Read `{guide_path}`.",
+            f"Draft `{packet.get('outputFile')}` section by section using `sectionPlan`.",
+        ],
+    }
+
+
+def _render_generic_markdown(packet: dict[str, Any], guide: dict[str, Any]) -> str:
+    lines = [
+        f"# {Path(packet.get('outputFile', 'document.md')).stem.replace('_', ' ')}",
+        "",
+        "## Overview",
+        packet.get("documentOverview", "No grounded overview was available."),
+        "",
+        f"Target path: `{packet.get('targetPath', '')}`",
+        f"Scan root: `{packet.get('scanRoot', '')}`",
+        "",
+        f"## {packet.get('confirmedTitle', 'Confirmed From Codebase')}",
+    ]
+    lines.extend(_render_confirmed_sections(packet))
+    lines.extend(["", f"## {packet.get('inferredTitle', 'Inferred Architecture')}"])
+    lines.extend(_render_inferred_sections(packet))
+    lines.extend(["", "## Open Questions / Uncertainty"])
+    lines.extend(_render_uncertainty_sections(packet))
+    return "\n".join(lines) + "\n"
+
+
+def _validate_generic_markdown(document: str, guide: dict[str, Any]) -> None:
+    missing_sections = []
+    for section in guide.get("sectionPlan", []):
+        title = section.get("section")
+        if title and f"## {title}" not in document:
+            missing_sections.append(title)
+    if missing_sections:
+        raise RuntimeError(f"WRITE_VALIDATION_FAILED: missing sections: {', '.join(missing_sections)}")
+
+
 def _is_live_pid(pid: int) -> bool:
     try:
         os.kill(pid, 0)
@@ -1494,23 +2008,56 @@ def analyze(target_path: str, config: EngineConfig) -> dict[str, Any]:
     }
 
 
-def generate(target_path: str, config: EngineConfig) -> dict[str, Any]:
-    packet = _build_design_packet(target_path, config)
-    guide = _build_archify_guide(packet, config)
-    packet_path = config.output_dir / "design-packet.json"
-    brief_path = config.output_dir / "design-brief.md"
-    guide_path = config.output_dir / "archify.guide.json"
-    guide_brief_path = config.output_dir / "archify.guide.md"
+def generate(target_path: str, config: EngineConfig, doc_type: str = "archify") -> dict[str, Any]:
+    if doc_type == "archify":
+        packet = _rewrite_payload_refs(_build_design_packet(target_path, config), config, doc_type)
+        packet["artifact"] = "packet.json"
+        packet["docType"] = doc_type
+        packet["outputFile"] = "archify.md"
+        guide = _rewrite_payload_refs(_build_archify_guide(packet, config), config, doc_type)
+        guide["artifact"] = "guide.json"
+    else:
+        packet = _build_generic_packet(target_path, config, doc_type)
+        guide = _build_generic_guide(packet, config, doc_type)
 
-    _atomic_write_json(packet_path, packet)
-    _atomic_write_text(brief_path, _render_design_brief(packet))
-    _atomic_write_json(guide_path, guide)
-    _atomic_write_text(guide_brief_path, _render_archify_guide_brief(guide))
+    paths = _doc_artifact_paths(config, doc_type)
+    brief = _rewrite_text_refs(_render_design_brief(packet), config, doc_type) if doc_type == "archify" else _rewrite_text_refs(_render_generic_markdown(packet, guide), config, doc_type)
+    guide_brief = _rewrite_text_refs(_render_archify_guide_brief(guide), config, doc_type) if doc_type == "archify" else _rewrite_text_refs(_render_archify_guide_brief(guide), config, doc_type)
+
+    _atomic_write_json(paths["packet"], packet)
+    _atomic_write_text(paths["brief"], brief)
+    _atomic_write_json(paths["guide"], guide)
+    _atomic_write_text(paths["guide_brief"], guide_brief)
 
     return {
         "status": "ok",
         "phase": "generate",
+        "docType": doc_type,
+        "outputFile": packet.get("outputFile"),
         "targetPath": str(Path(target_path).resolve()),
-        "outputs": [str(packet_path), str(brief_path), str(guide_path), str(guide_brief_path)],
-        "note": "Phase 9 design packet and archify guide generated from grounded `.archify/` artifacts for upload-ready `archify.md` prompt-pack authoring.",
+        "outputs": [str(paths["packet"]), str(paths["brief"]), str(paths["guide"]), str(paths["guide_brief"])],
+        "note": f"Synthesis packet and guide generated for `{packet.get('outputFile')}` from grounded `.archify/` artifacts.",
+    }
+
+
+def write_document(target_path: str, config: EngineConfig, doc_type: str = "archify") -> dict[str, Any]:
+    packet = _load_ready_doc_artifact(config, doc_type, "packet.json")
+    guide = _load_ready_doc_artifact(config, doc_type, "guide.json")
+    output_path = config.repo_root / _doc_spec(doc_type)["outputFile"]
+    if doc_type == "archify":
+        document = _render_archify_markdown(packet, guide)
+        _validate_archify_markdown(document, guide)
+    else:
+        document = _render_generic_markdown(packet, guide)
+        _validate_generic_markdown(document, guide)
+    _atomic_write_text(output_path, document)
+
+    return {
+        "status": "ok",
+        "phase": "write",
+        "docType": doc_type,
+        "targetPath": str(Path(target_path).resolve()),
+        "output": str(output_path),
+        "sections": [item.get("section") for item in guide.get("sectionPlan", []) if item.get("section")],
+        "note": f"{output_path.name} written from `{_doc_artifact_relpath(config, doc_type, 'packet.json')}` and `{_doc_artifact_relpath(config, doc_type, 'guide.json')}`.",
     }
