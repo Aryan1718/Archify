@@ -316,7 +316,7 @@ export async function statusCommand(repoRoot, options = {}) {
       installed: false,
       repoRoot,
       summary: "Archify is not set up in this repository yet.",
-      nextStep: "Run `npx archify init` in this repository."
+      nextStep: "Run `npx archify-cli init` in this repository."
     };
   }
 
@@ -402,27 +402,27 @@ export async function statusCommand(repoRoot, options = {}) {
   if (!analysisReady) {
     recommendedAction = "analyze";
     summary = "Archify is set up, but repository knowledge has not been built yet.";
-    nextStep = "Ask your AI assistant to use Archify on this repo, or run `npx archify analyze .` if you want to build the knowledge base manually.";
+    nextStep = "Ask your AI assistant to use Archify on this repo, or run `npx archify-cli analyze .` if you want to build the knowledge base manually.";
   } else if (knowledgeStale) {
     recommendedAction = "analyze";
     summary = "Archify knowledge exists, but it looks older than the current repository files.";
-    nextStep = "Ask your AI assistant to use Archify on this repo so it can refresh the knowledge, or run `npx archify analyze .` manually.";
+    nextStep = "Ask your AI assistant to use Archify on this repo so it can refresh the knowledge, or run `npx archify-cli analyze .` manually.";
   } else if (!generatedPacketReady) {
     recommendedAction = "generate";
     summary = `Archify knowledge is ready, but the ${packetLabel} has not been generated yet.`;
-    nextStep = `Ask your AI assistant to use Archify on this repo, or run \`npx archify generate . --doc-type ${doc.id}\` if you want ${doc.outputFile} now.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo, or run \`npx archify-cli generate . --doc-type ${doc.id}\` if you want ${doc.outputFile} now.`;
   } else if (designPacketStale) {
     recommendedAction = "generate";
     summary = `Archify knowledge is ready, but the ${packetLabel} is older than the latest analysis.`;
-    nextStep = `Ask your AI assistant to use Archify on this repo so it can refresh ${doc.outputFile}, or run \`npx archify generate . --doc-type ${doc.id}\` manually.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo so it can refresh ${doc.outputFile}, or run \`npx archify-cli generate . --doc-type ${doc.id}\` manually.`;
   } else if (!finalDocumentExists) {
     recommendedAction = "write";
     summary = `Archify synthesis artifacts are ready, but ${doc.outputFile} has not been written yet.`;
-    nextStep = `Ask your AI assistant to use Archify on this repo, or run \`npx archify write . --doc-type ${doc.id}\` if you want the final document now.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo, or run \`npx archify-cli write . --doc-type ${doc.id}\` if you want the final document now.`;
   } else if (finalDocumentStale) {
     recommendedAction = "write";
     summary = `${doc.outputFile} exists, but it is older than the latest synthesis packet.`;
-    nextStep = `Ask your AI assistant to use Archify on this repo so it can refresh ${doc.outputFile}, or run \`npx archify write . --doc-type ${doc.id} --force\` manually.`;
+    nextStep = `Ask your AI assistant to use Archify on this repo so it can refresh ${doc.outputFile}, or run \`npx archify-cli write . --doc-type ${doc.id} --force\` manually.`;
   }
 
   return {

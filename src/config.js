@@ -77,7 +77,7 @@ export async function loadConfig(repoRoot) {
   } catch (error) {
     if (error.code === "ENOENT") {
       throw new ArchifyError(
-        `Missing ${CONFIG_FILE}. Run "archify init" in ${repoRoot} before using this command.`,
+        `Missing ${CONFIG_FILE}. Run "archify-cli init" in ${repoRoot} before using this command.`,
         { code: "CONFIG_MISSING", exitCode: 2 }
       );
     }

@@ -15,16 +15,16 @@ function printUsage() {
   console.log(`Archify Phase 0
 
 Usage:
-  npx archify init [--install-mode global]
-  npx archify init [--install-mode project --project-path <path> --platform codex|claude-code|both]
-  npx archify status [--doc-type <type>]
-  npx archify analyze <path>
-  npx archify generate <path> [--doc-type <type>]
-  npx archify write <path> [--doc-type <type>] [--force]
-  npx archify clean
+  npx archify-cli init [--install-mode global]
+  npx archify-cli init [--install-mode project --project-path <path> --platform codex|claude-code|both]
+  npx archify-cli status [--doc-type <type>]
+  npx archify-cli analyze <path>
+  npx archify-cli generate <path> [--doc-type <type>]
+  npx archify-cli write <path> [--doc-type <type>] [--force]
+  npx archify-cli clean
 
 Recommended flow:
-  1. Run \`npx archify init\` once in the repository you want to work on.
+  1. Run \`npx archify-cli init\` once in the repository you want to work on.
   2. Ask your AI assistant to use Archify on that repo.
   3. Let the agent refresh \`.archify/\` knowledge and generate outputs internally.
 

@@ -3,6 +3,26 @@ import { spawnSync } from "node:child_process";
 
 import { ArchifyError } from "./errors.js";
 
+function getPythonLaunchers() {
+  const configured = process.env.ARCHIFY_PYTHON?.trim();
+  if (configured) {
+    return [{ command: configured, args: [] }];
+  }
+
+  if (process.platform === "win32") {
+    return [
+      { command: "python", args: [] },
+      { command: "py", args: ["-3"] },
+      { command: "python3", args: [] }
+    ];
+  }
+
+  return [
+    { command: "python3", args: [] },
+    { command: "python", args: [] }
+  ];
+}
+
 export function runPythonEngine({ appRoot, repoRoot, command, targetPath, config, docType }) {
   const pythonRoot = path.join(appRoot, "python");
   const args = [
@@ -25,18 +45,29 @@ export function runPythonEngine({ appRoot, repoRoot, command, targetPath, config
     ? `${pythonRoot}${path.delimiter}${existingPythonPath}`
     : pythonRoot;
 
-  const result = spawnSync("python3", args, {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      PYTHONPATH: pythonPath
-    },
-    encoding: "utf8"
-  });
+  let result;
+  let startError;
+  for (const launcher of getPythonLaunchers()) {
+    result = spawnSync(launcher.command, [...launcher.args, ...args], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        PYTHONPATH: pythonPath
+      },
+      encoding: "utf8"
+    });
 
-  if (result.error) {
+    if (!result.error) {
+      startError = null;
+      break;
+    }
+
+    startError = result.error;
+  }
+
+  if (startError) {
     throw new ArchifyError(
-      `Failed to start Python engine: ${result.error.message}`,
+      `Failed to start Python engine: ${startError.message}`,
       { code: "PYTHON_ENGINE_START_FAILED", exitCode: 2 }
     );
   }
