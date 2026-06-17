@@ -1,68 +1,90 @@
-<div align="center">
+# Archify CLI
 
-<pre>
-    _              _     _  __
-   / \   _ __ ___| |__ (_)/ _|_   _
-  / _ \ | '__/ __| '_ \| | |_| | | |
- / ___ \| | | (__| | | | |  _| |_| |
-/_/   \_\_|  \___|_| |_|_|_|  \__, |
-                              |___/
-</pre>
+`archify-cli` helps an AI coding assistant understand a repository before it writes architecture docs or design guidance.
 
-<p><strong>Grounded codebase documentation</strong></p>
+It analyzes a codebase, builds grounded artifacts inside `.archify/`, and generates structured document packets that an assistant can use to produce files like `archify.md`, `TECH_STACK.md`, `API_DESIGN.md`, and more.
 
-<p><code>npx archify init</code></p>
+## What It Does
 
-</div>
+Archify is built for repositories where you want architecture output based on actual code and docs instead of guesswork.
 
-Archify extracts grounded architecture and codebase context from a repository so it is easier to study, understand, and build similar systems.
+It can:
+
+- scan the repository and build a grounded knowledge base in `.archify/`
+- detect when existing analysis is still fresh and reuse it
+- regenerate analysis only when the repository changes
+- generate doc-specific packets and guides for assistant-driven writing
+- write final root-level documents for supported doc types
+
+## Who It Is For
+
+Use Archify if you want to:
+
+- understand an unfamiliar codebase faster
+- generate architecture documentation from real repository evidence
+- give Codex or Claude Code a grounded context pack before asking it to write docs
+- keep architecture outputs refreshable as the codebase evolves
+
+## Requirements
+
+- `Node.js >= 20`
+- `Python >= 3.11`
+- an AI assistant workflow using Codex or Claude Code
+
+Python is required because the analysis engine shipped inside the package is implemented in Python.
 
 ## Quick Start
 
-From the root of the repository:
+From the repository root:
 
 ```bash
-npx archify init
+npx archify-cli init
 ```
 
-Then use Archify from your assistant:
+Then tell your assistant:
 
 ```text
 Use Archify on this repo
 ```
 
-## What It Does
+Typical flow:
 
-- Builds a grounded repository knowledge base inside `.archify/`
-- Reuses existing artifacts when they are already fresh
-- Refreshes analysis only when the repository has changed
-- Generates synthesis packets and guide artifacts used to study the codebase and write the selected output document
+1. Run `npx archify-cli init` once.
+2. Ask your assistant to use Archify on the repo.
+3. Archify checks status and decides whether it should analyze, generate, write, or reuse existing artifacts.
 
-## How It Works
+## Install Options
 
-1. Run `npx archify init` once in the repository.
-2. Ask your assistant to use Archify.
-3. Archify checks status and decides what to do next.
+Run directly with `npx`:
 
-What Archify does next:
-- initialize if setup is missing
-- analyze if knowledge is missing or stale
-- generate if the design packet or guide artifacts are missing or stale
-- write if the selected final document is missing or stale
-- reuse existing artifacts if everything is fresh
+```bash
+npx archify-cli init
+```
+
+Or install it in a project:
+
+```bash
+npm i -D archify-cli
+```
+
+Then run:
+
+```bash
+npx archify-cli status
+```
 
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `npx archify init` | Set up Archify in the current repository |
-| `npx archify status [--doc-type <type>]` | Show setup state, doc-specific artifact freshness, and the next recommended action |
-| `npx archify analyze .` | Build or refresh the grounded repository knowledge in `.archify/` |
-| `npx archify generate . [--doc-type <type>]` | Build the synthesis packet and guide artifacts for the selected document type |
-| `npx archify write . [--doc-type <type>]` | Write the selected root-level document from the generated synthesis artifacts |
-| `npx archify clean` | Remove generated artifacts from `.archify/` |
+| `npx archify-cli init` | Set up Archify in the current repository |
+| `npx archify-cli status [--doc-type <type>]` | Show setup state, artifact freshness, and the next recommended action |
+| `npx archify-cli analyze .` | Build or refresh grounded repository knowledge in `.archify/` |
+| `npx archify-cli generate . [--doc-type <type>]` | Build the synthesis packet and guide for the selected document type |
+| `npx archify-cli write . [--doc-type <type>]` | Write the selected root-level document from generated synthesis artifacts |
+| `npx archify-cli clean` | Remove generated artifacts from `.archify/` |
 
-## Generated Files
+## What Gets Created
 
 Archify adds:
 
@@ -71,7 +93,7 @@ Archify adds:
 - project skill files for Codex or Claude Code installs
 - `.archify/` for analysis, synthesis, and guide artifacts
 
-## Core Artifacts
+Core artifacts include:
 
 | File | Purpose |
 | --- | --- |
@@ -82,13 +104,12 @@ Archify adds:
 | `.archify/architecture-context.json` | Grounded architecture context |
 | `.archify/docs/<docType>/packet.json` | Doc-scoped synthesis packet used to author the selected root document |
 | `.archify/docs/<docType>/guide.json` | Section-by-section guide for generating the selected root document |
-| `.archify/docs/<docType>/brief.md` | Human-readable synthesis brief for the selected document type |
-| `.archify/docs/<docType>/guide.md` | Human-readable guide brief for the selected document type |
-| Root document output | `archify.md` by default, or the file mapped from `--doc-type` |
+| `.archify/docs/<docType>/brief.md` | Human-readable synthesis brief |
+| `.archify/docs/<docType>/guide.md` | Human-readable guide brief |
 
 ## Available Documents
 
-Archify supports these document types today:
+Archify supports these document types:
 
 | `--doc-type` value | Output file |
 | --- | --- |
@@ -106,14 +127,14 @@ If `--doc-type` is omitted, Archify defaults to `archify` and writes `archify.md
 Examples:
 
 ```bash
-npx archify status --doc-type tech_stack
-npx archify generate . --doc-type api_design
-npx archify write . --doc-type flows
+npx archify-cli status --doc-type tech_stack
+npx archify-cli generate . --doc-type api_design
+npx archify-cli write . --doc-type flows
 ```
 
-## Repository Understanding
+## How The Analysis Works
 
-Archify analyzes repository structure and documentation, including:
+Archify analyzes repository structure and supporting docs, including:
 
 - source files
 - routes and entrypoints
@@ -121,16 +142,17 @@ Archify analyzes repository structure and documentation, including:
 - database and migration files
 - README and supporting architecture documents
 
-Documentation generation is guide-driven:
+The workflow is guide-driven:
 
 - `analyze` produces grounded `.archify` artifacts
-- `generate` produces a doc-scoped synthesis packet plus a doc-scoped guide
+- `generate` produces a doc-scoped synthesis packet and guide
 - `write` materializes the selected root document from those artifacts
-- the installed skill reads the selected doc type's packet and guide before drafting that document
+- installed assistant skills read the selected packet and guide before drafting the final document
+
+Grounded `.archify/` artifacts remain the primary source of confirmed facts.
 
 ## Notes
 
 - `init` is the main setup command.
 - `status` is the main inspection command.
 - `analyze`, `generate`, and `write` are available for manual workflows, but the installed skill is designed to run them when needed.
-- Supporting docs such as `README.md` can be gathered alongside analysis, but grounded `.archify/` artifacts remain the primary source of confirmed facts.

@@ -88,12 +88,12 @@ test("bare archify runs setup for the current project and installs both Codex an
   const codexSkill = await fs.readFile(path.join(cwd, ".agents", "skills", "archify", "SKILL.md"), "utf8");
   assert.match(codexSkill, /^---\nname: archify\ndescription:/);
   assert.match(codexSkill, /Build grounded repository architecture documents/i);
-  assert.match(codexSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform codex`/i);
+  assert.match(codexSkill, /If setup is missing, ask for permission before starting `npx archify-cli init --install-mode project --project-path \. --platform codex`/i);
   assert.match(codexSkill, /Default to doc type `archify` when the user simply says to use Archify on the repo/i);
   assert.match(codexSkill, /Write one root-level file matching the selected doc type only/i);
-  assert.match(codexSkill, /Start by checking `npx archify status --doc-type <type>`/i);
+  assert.match(codexSkill, /Start by checking `npx archify-cli status --doc-type <type>`/i);
   assert.match(codexSkill, /Defaults to `archify\.md`, and also supports the other Archify doc types through `--doc-type`/i);
-  assert.match(codexSkill, /Ask for permission before starting `npx archify analyze \.`/i);
+  assert.match(codexSkill, /Ask for permission before starting `npx archify-cli analyze \.`/i);
   assert.match(codexSkill, /Treat `\.archify` artifacts as the primary source of confirmed facts/i);
   assert.match(codexSkill, /Keep confirmed findings, inferred notes, and open questions separate/i);
   assert.match(codexSkill, /If the synthesis packet is missing or stale for the selected doc type/i);
@@ -109,12 +109,12 @@ test("bare archify runs setup for the current project and installs both Codex an
   const claudeSkill = await fs.readFile(path.join(cwd, ".claude", "skills", "archify", "SKILL.md"), "utf8");
   assert.match(claudeSkill, /^---\nname: archify\ndescription:/);
   assert.match(claudeSkill, /Claude Code/i);
-  assert.match(claudeSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
+  assert.match(claudeSkill, /If setup is missing, ask for permission before starting `npx archify-cli init --install-mode project --project-path \. --platform claude-code`/i);
   assert.match(claudeSkill, /Default to doc type `archify` when the user simply says to use Archify on the repo/i);
   assert.match(claudeSkill, /Write one root-level file matching the selected doc type only/i);
-  assert.match(claudeSkill, /Start by checking `npx archify status --doc-type <type>`/i);
+  assert.match(claudeSkill, /Start by checking `npx archify-cli status --doc-type <type>`/i);
   assert.match(claudeSkill, /Defaults to `archify\.md`, and also supports the other Archify doc types through `--doc-type`/i);
-  assert.match(claudeSkill, /Ask for permission before starting `npx archify analyze \.`/i);
+  assert.match(claudeSkill, /Ask for permission before starting `npx archify-cli analyze \.`/i);
   assert.match(claudeSkill, /Treat `\.archify` artifacts as the primary source of confirmed facts/i);
   assert.match(claudeSkill, /Keep confirmed findings, inferred notes, and open questions separate/i);
   assert.match(claudeSkill, /Read `\.archify\/docs\/<type>\/packet\.json` first/i);
@@ -188,8 +188,8 @@ test("init supports installing into another project path for the selected platfo
   await fs.access(path.join(targetProject, ".archifyignore"));
   await fs.access(path.join(targetProject, ".claude", "skills", "archify", "SKILL.md"));
   const installedClaudeSkill = await fs.readFile(path.join(targetProject, ".claude", "skills", "archify", "SKILL.md"), "utf8");
-  assert.match(installedClaudeSkill, /Start by checking `npx archify status --doc-type <type>`/i);
-  assert.match(installedClaudeSkill, /If setup is missing, ask for permission before starting `npx archify init --install-mode project --project-path \. --platform claude-code`/i);
+  assert.match(installedClaudeSkill, /Start by checking `npx archify-cli status --doc-type <type>`/i);
+  assert.match(installedClaudeSkill, /If setup is missing, ask for permission before starting `npx archify-cli init --install-mode project --project-path \. --platform claude-code`/i);
   assert.ok(!(await fs.access(path.join(targetProject, ".agents", "skills", "archify", "SKILL.md")).then(() => true).catch(() => false)));
   assert.ok(!(await fs.access(path.join(launcher, "archify.config.json")).then(() => true).catch(() => false)));
 });
@@ -671,7 +671,7 @@ test("status explains setup state before and after analysis", async () => {
   assert.equal(result.status, 0, result.stderr);
   let parsed = parseStdoutJson(result);
   assert.equal(parsed.installed, false);
-  assert.match(parsed.nextStep, /npx archify init/i);
+  assert.match(parsed.nextStep, /npx archify-cli init/i);
 
   assert.equal(runInit({ cwd, projectPath: "." }).status, 0);
 
@@ -890,7 +890,8 @@ print(make_file_id("src/app.py"))
 print(make_symbol_id("src/app.py", "function", "run"))
 print(validate_extraction(payload))
 `;
-  const result = spawnSync("python3", ["-c", script], {
+  const pythonCommand = process.platform === "win32" ? "python" : "python3";
+  const result = spawnSync(pythonCommand, ["-c", script], {
     cwd: repoRoot,
     env: {
       ...process.env,

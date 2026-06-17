@@ -1,10 +1,27 @@
 {
-  "name": "archify",
-  "version": "0.1.0",
+  "name": "archify-cli",
+  "version": "0.1.1",
   "description": "Contract-first architecture understanding scaffold for repository analysis.",
+  "license": "MIT",
+  "author": "Aryan",
+  "keywords": [
+    "architecture",
+    "documentation",
+    "repository-analysis",
+    "cli",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aryan1718/Archify.git"
+  },
+  "homepage": "https://github.com/Aryan1718/Archify#readme",
+  "bugs": {
+    "url": "https://github.com/Aryan1718/Archify/issues"
+  },
   "type": "module",
   "bin": {
-    "archify": "./bin/archify.js"
+    "archify-cli": "bin/archify.js"
   },
   "scripts": {
     "test": "node --test"
@@ -12,7 +29,7 @@
   "files": [
     "bin",
     "src",
-    "python"
+    "python/**/*.py"
   ],
   "engines": {
     "node": ">=20.0.0",

@@ -40,11 +40,11 @@ Supported documents:
 Workflow:
 1. Default to doc type \`archify\` when the user simply says to use Archify on the repo.
 2. If the user clearly asks for another supported document, select that doc type and use \`--doc-type <type>\` on \`status\`, \`generate\`, and \`write\`.
-3. Start by checking \`npx archify status --doc-type <type>\`.
-4. If setup is missing, ask for permission before starting \`npx archify init --install-mode ${shared ? "global" : "project"}${shared ? "" : " --project-path ."} --platform ${initPlatform}\`.
-5. If repository knowledge is missing or stale, ask for permission before starting \`npx archify analyze .\`.
-6. If the synthesis packet is missing or stale for the selected doc type, ask for permission before starting \`npx archify generate . --doc-type <type>\`.
-7. After \`generate\`, run \`npx archify status --doc-type <type>\` again and only continue if the synthesis packet is ready and not stale.
+3. Start by checking \`npx archify-cli status --doc-type <type>\`.
+4. If setup is missing, ask for permission before starting \`npx archify-cli init --install-mode ${shared ? "global" : "project"}${shared ? "" : " --project-path ."} --platform ${initPlatform}\`.
+5. If repository knowledge is missing or stale, ask for permission before starting \`npx archify-cli analyze .\`.
+6. If the synthesis packet is missing or stale for the selected doc type, ask for permission before starting \`npx archify-cli generate . --doc-type <type>\`.
+7. After \`generate\`, run \`npx archify-cli status --doc-type <type>\` again and only continue if the synthesis packet is ready and not stale.
 8. Read \`.archify/docs/<type>/packet.json\` first.
 9. Read \`.archify/docs/<type>/guide.json\` second and follow its read order, section plan, fact policy, and validation checks before inspecting anything else.
 10. Read the referenced \`.archify/\` artifacts next. These are the mandatory primary grounding.
