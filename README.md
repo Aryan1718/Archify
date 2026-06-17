@@ -1,4 +1,17 @@
-# Archify CLI
+<div align="center">
+
+<pre>
+    _              _     _  __
+   / \   _ __ ___| |__ (_)/ _|_   _
+  / _ \ | '__/ __| '_ \| | |_| | | |
+ / ___ \| | | (__| | | | |  _| |_| |
+/_/   \_\_|  \___|_| |_|_|_|  \__, |
+                              |___/
+</pre>
+
+<p><strong>Archify CLI</strong></p>
+
+</div>
 
 `archify-cli` helps an AI coding assistant understand a repository before it writes architecture docs or design guidance.
 
