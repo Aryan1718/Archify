@@ -9,13 +9,11 @@
                               |___/
 </pre>
 
-<p><strong>Archify CLI</strong></p>
+<p><code>npx archify-cli init</code></p>
 
 </div>
 
-`archify-cli` helps an AI coding assistant understand a repository before it writes architecture docs or design guidance.
-
-It analyzes a codebase, builds grounded artifacts inside `.archify/`, and generates structured document packets that an assistant can use to produce files like `archify.md`, `TECH_STACK.md`, `API_DESIGN.md`, and more.
+`archify-cli` analyzes your repository and gives AI assistants the grounded context they need to write architecture docs.
 
 ## What It Does
 
