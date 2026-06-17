@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import path from "node:path";
 
 import {
@@ -47,7 +48,7 @@ async function validateProjectPath(projectPath) {
     });
   }
 
-  return projectPath;
+  return fs.realpath(projectPath);
 }
 
 async function resolveInstallModeInteractive() {
@@ -164,6 +165,7 @@ function resolveNonInteractivePlatform(explicitPlatform) {
 }
 
 export async function resolveSetupOptions(repoRoot, options) {
+  const resolvedRepoRoot = await fs.realpath(repoRoot);
   const explicitMode = options.installMode?.trim().toLowerCase();
   const explicitPlatform = options.platform?.trim().toLowerCase();
   const explicitProjectPath = options.projectPath?.trim();
@@ -187,7 +189,7 @@ export async function resolveSetupOptions(repoRoot, options) {
     }
 
     if (installMode === "global") {
-      return { installMode, platforms: [...SHARED_INSTALL_PLATFORMS], projectRoot: repoRoot };
+      return { installMode, platforms: [...SHARED_INSTALL_PLATFORMS], projectRoot: resolvedRepoRoot };
     }
 
     if (!explicitProjectPath) {
@@ -198,7 +200,7 @@ export async function resolveSetupOptions(repoRoot, options) {
     }
 
     const platforms = resolveNonInteractivePlatform(explicitPlatform);
-    const projectRoot = await validateProjectPath(path.resolve(repoRoot, explicitProjectPath));
+    const projectRoot = await validateProjectPath(path.resolve(resolvedRepoRoot, explicitProjectPath));
     return { installMode, platforms, projectRoot };
   }
 
@@ -218,10 +220,10 @@ export async function resolveSetupOptions(repoRoot, options) {
   const projectRoot = installMode === "project"
     ? (
       explicitProjectPath
-        ? await validateProjectPath(path.resolve(repoRoot, explicitProjectPath))
-        : await resolveProjectPathInteractive(repoRoot)
+        ? await validateProjectPath(path.resolve(resolvedRepoRoot, explicitProjectPath))
+        : await resolveProjectPathInteractive(resolvedRepoRoot)
     )
-    : repoRoot;
+    : resolvedRepoRoot;
 
   if (installMode === "global" && explicitProjectPath) {
     throw new ArchifyError('The "--project-path" flag can only be used with "--install-mode project".', {
